@@ -1,0 +1,30 @@
+name = "ch08-saas-mvp"
+main = "src/index.ts"
+compatibility_date = "2025-12-01"
+
+[vars]
+JWT_SECRET = "saas-secret-change-in-production"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "saas-db"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+migrations_dir = "drizzle"
+
+[[queues.producers]]
+binding = "TASK_QUEUE"
+queue = "saas-tasks"
+
+[[queues.consumers]]
+queue = "saas-tasks"
+max_batch_size = 10
+max_batch_timeout = 30
+
+[durable_objects]
+bindings = [
+  { name = "RATE_LIMITER", class_name = "RateLimiter" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["RateLimiter"]

@@ -1,0 +1,16 @@
+name = "ch07-blog-api"
+main = "src/index.ts"
+compatibility_date = "2025-12-01"
+
+[vars]
+JWT_SECRET = "blog-secret-change-in-production"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "blog-db"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+migrations_dir = "drizzle"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "blog-images"

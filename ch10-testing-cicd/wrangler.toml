@@ -1,0 +1,8 @@
+name = "ch10-testing-cicd"
+main = "src/index.ts"
+compatibility_date = "2025-12-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "test-db"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

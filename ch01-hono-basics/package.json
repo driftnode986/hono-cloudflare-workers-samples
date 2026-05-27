@@ -1,0 +1,19 @@
+{
+  "name": "ch01-hono-basics",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@cloudflare/workers-types": "^4.20250525.0",
+    "wrangler": "^4.14.0"
+  }
+}
