@@ -9,7 +9,7 @@
 - **書籍名**: Hono + Cloudflare Workers 実践入門 -- 無料枠で動くフルスタックWebアプリを作る
 - **著者**: 牧野 誠
 - **価格**: ¥980 (Kindle / Kindle Unlimited 対応)
-- **Amazon**: https://www.amazon.co.jp/dp/ (ASIN 出版後追記)
+- **Amazon**: https://www.amazon.co.jp/dp/B0H37LKTTN
 
 ## 各章のサンプル一覧
 
@@ -72,4 +72,4 @@ MIT License -- 詳細は [LICENSE](LICENSE) を参照してください。
 
 Amazon Kindle ストアで購入できます。
 
-https://www.amazon.co.jp/dp/ (ASIN 出版後追記)
+https://www.amazon.co.jp/dp/B0H37LKTTN
