@@ -2,6 +2,7 @@
 import { Hono } from 'hono'
 import { embed } from '../lib/embed'
 import { decodeImage } from '../lib/image'
+import { sha256Hex } from '../lib/hash'
 
 type Bindings = {
   AI: Ai
@@ -204,7 +205,7 @@ ai.post('/gateway-chat', async (c) => {
 ai.post('/cached-chat', async (c) => {
   const { message } = await c.req.json<{ message: string }>()
 
-  const cacheKey = `ai:${message}`
+  const cacheKey = `ai:${await sha256Hex(message)}`
   const cached = await c.env.AI_CACHE.get(cacheKey)
   if (cached) {
     return c.json({ response: cached, cached: true })

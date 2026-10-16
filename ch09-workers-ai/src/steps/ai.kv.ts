@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { sha256Hex } from '../lib/hash'
 
 // #region kv-cache
 type Bindings = {
@@ -11,7 +12,7 @@ const ai = new Hono<{ Bindings: Bindings }>()
 ai.post('/cached-chat', async (c) => {
   const { message } = await c.req.json<{ message: string }>()
 
-  const cacheKey = `ai:${message}`
+  const cacheKey = `ai:${await sha256Hex(message)}`
   const cached = await c.env.AI_CACHE.get(cacheKey)
   if (cached) {
     return c.json({ response: cached, cached: true })

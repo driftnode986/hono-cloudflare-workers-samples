@@ -1,3 +1,4 @@
+# #region workflow-test
 # .github/workflows/deploy.yml
 name: Test & Deploy
 
@@ -17,14 +18,21 @@ jobs:
           node-version: '22'
       - run: npm ci
       - run: npx vitest run
+# #endregion
 
+# #region workflow-deploy
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: cloudflare/wrangler-action@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+# #endregion

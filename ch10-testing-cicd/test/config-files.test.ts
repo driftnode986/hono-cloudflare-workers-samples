@@ -69,10 +69,21 @@ describe('.github/workflows/deploy.yml', () => {
     expect(commands).toContain('npx vitest run')
   })
 
+  it('deploy は npm ci で入れた手元の版の Wrangler を使う', () => {
+    const steps = workflow.jobs.deploy.steps as Config[]
+    const ci = steps.findIndex((s) => s.run === 'npm ci')
+    const action = steps.findIndex((s) =>
+      String(s.uses).startsWith('cloudflare/wrangler-action@')
+    )
+    expect(ci).toBeGreaterThan(-1)
+    expect(ci).toBeLessThan(action)
+  })
+
   it('デプロイにはシークレットを参照する（値を書かない）', () => {
     const wrangler = workflow.jobs.deploy.steps.find((s: Config) =>
       String(s.uses).startsWith('cloudflare/wrangler-action@')
     )
+    expect(wrangler.uses).toBe('cloudflare/wrangler-action@v4')
     expect(wrangler.with.apiToken).toBe('${{ secrets.CLOUDFLARE_API_TOKEN }}')
     expect(wrangler.with.accountId).toBe('${{ secrets.CLOUDFLARE_ACCOUNT_ID }}')
   })

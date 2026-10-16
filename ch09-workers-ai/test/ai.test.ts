@@ -10,6 +10,8 @@ import {
 } from './helpers/fakes'
 
 const textAnswer = { response: 'こんにちは' }
+const HI_SHA256 =
+  '8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4'
 
 describe('POST /ai/generate', () => {
   it('prompt をモデルに渡し、結果を JSON で返す', async () => {
@@ -277,7 +279,9 @@ describe('POST /ai/cached-chat', () => {
       response: 'こんにちは',
       cached: false
     })
-    expect(store.get('ai:hi')).toEqual({ value: 'こんにちは', ttl: 3600 })
+    const hashed = [...store.keys()]
+    expect(hashed).toEqual([`ai:${HI_SHA256}`])
+    expect(store.get(hashed[0])).toEqual({ value: 'こんにちは', ttl: 3600 })
 
     const second = await app.request(
       '/ai/cached-chat',
@@ -289,6 +293,20 @@ describe('POST /ai/cached-chat', () => {
       cached: true
     })
     expect(calls).toHaveLength(1)
+  })
+
+  it('長いメッセージでもキーは 512 バイト以内（SHA-256 のハッシュ）', async () => {
+    const { ai } = fakeAi(() => textAnswer)
+    const { kv, store } = fakeKV()
+    const env = { AI: ai, AI_CACHE: kv }
+    await app.request(
+      '/ai/cached-chat',
+      jsonPost({ message: 'あ'.repeat(2000) }),
+      env
+    )
+    const [key] = [...store.keys()]
+    expect(key).toMatch(/^ai:[0-9a-f]{64}$/)
+    expect(new TextEncoder().encode(key).length).toBeLessThanOrEqual(512)
   })
 
   it('メッセージが違えば別のキャッシュになる', async () => {

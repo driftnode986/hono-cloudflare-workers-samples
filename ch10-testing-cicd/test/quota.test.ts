@@ -1,17 +1,26 @@
 // test/quota.test.ts
 import { env } from 'cloudflare:workers'
-import { describe, it, expect } from 'vitest'
+import { applyD1Migrations } from 'cloudflare:test'
+import { describe, it, expect, beforeAll } from 'vitest'
+import { app } from '../src/index'
+import { seedTenant } from './helpers/seed'
 
-describe('Quota tracking', () => {
-  it('increments usage counter in KV', async () => {
-    const key = 'usage:tenant-1:2026-05-28'
+const today = new Date().toISOString().slice(0, 10)
+const headers = { Authorization: 'Bearer sk_live_quota_key' }
 
-    await env.PLAN_KV.put(key, '0', { expirationTtl: 86400 })
-    const before = await env.PLAN_KV.get(key)
-    expect(before).toBe('0')
+describe('Quota', () => {
+  beforeAll(async () => {
+    await applyD1Migrations(env.DB, env.TEST_MIGRATIONS)
+    await seedTenant(env.DB, 'tenant-quota', 'sk_live_quota_key')
+  })
 
-    await env.PLAN_KV.put(key, '1', { expirationTtl: 86400 })
-    const after = await env.PLAN_KV.get(key)
-    expect(after).toBe('1')
+  it('free プランの 1 日の上限 (100 回) を超えると 429', async () => {
+    await env.PLAN_KV.put(`usage:tenant-quota:${today}`, '100')
+    const res = await app.request('/api/resources', { headers }, env)
+    expect(res.status).toBe(429)
+    expect(await res.json()).toEqual({
+      error: 'Daily quota exceeded',
+      limit: 100,
+    })
   })
 })
