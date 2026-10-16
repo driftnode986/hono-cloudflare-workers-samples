@@ -24,6 +24,8 @@ async function main() {
   })
   const post = await getRes.json()
   // post: { id: string; title: string; body: string }
+
+  console.log({ posts, created, post })
 }
 // #endregion
 
@@ -38,6 +40,10 @@ type CreatePostResponse = InferResponseType<typeof client.api.posts.$post>
 // { id: string; title: string; body: string }
 // #endregion
 
-// 型検査のためだけに使う（呼び出しはテスト側で行う）
+// #region client-run
+// client.ts の末尾
+main()
+// #endregion
+
 export { main }
 export type { CreatePostRequest, CreatePostResponse }

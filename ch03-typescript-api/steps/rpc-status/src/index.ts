@@ -1,10 +1,11 @@
 import { Hono } from 'hono'
-import { findPost } from '../../../src/lib/find-post'
+
+// #region get-post-status
+// src/index.ts (前節の GET /api/posts/:id を置き換える)
+import { findPost } from './lib/find-post'
 
 const app = new Hono()
 
-// #region get-post-status
-// src/routes/posts.ts (サーバー側)
 const route = app.get('/api/posts/:id', (c) => {
   const id = c.req.param('id')
   const post = findPost(id)

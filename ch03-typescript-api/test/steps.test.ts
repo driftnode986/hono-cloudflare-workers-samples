@@ -14,7 +14,7 @@ import { requestId } from '../src/middleware/request-id'
 import rpcApp, { type AppType } from '../steps/rpc/src/index'
 import statusApp, { type AppType as StatusAppType } from '../steps/rpc-status/src/index'
 import { fetchPost } from '../steps/rpc-status/client'
-import { findPost } from '../src/lib/find-post'
+import { findPost } from '../steps/rpc-status/src/lib/find-post'
 
 const json = { 'Content-Type': 'application/json' }
 const post = (app: Hono<any, any, any>, path: string, body: unknown) =>
@@ -239,5 +239,31 @@ describe('3.5 app.route() で分割', () => {
     expect(res.status).toBe(201)
     expect(await res.json()).toEqual({ id: '1' })
     expect(await (await usersApp.request('/')).json()).toEqual({ users: [] })
+  })
+})
+
+describe('3.1 posts.ts を index.ts から app.route("/") でつなぐ', () => {
+  it('つないだ app で 400 と 201 が返る', async () => {
+    const app = new Hono()
+    app.route('/', validators)
+    const bad = await post(app, '/api/posts', { title: '', body: 'B' })
+    expect(bad.status).toBe(400)
+    const ok = await post(app, '/api/posts', { title: 'T', body: 'B' })
+    expect(ok.status).toBe(201)
+  })
+})
+
+describe('3.6 Zod 4 の z.uuid() / z.iso.datetime()', () => {
+  it('UUID と ISO 日時の形式を検証する', async () => {
+    const { PostSchema } = await import('../src/schemas/post')
+    const good = PostSchema.safeParse({
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      title: 't',
+      body: 'b',
+      createdAt: '2026-05-01T00:00:00Z',
+    })
+    expect(good.success).toBe(true)
+    const bad = PostSchema.safeParse({ id: 'x', title: 't', body: 'b', createdAt: 'x' })
+    expect(bad.success).toBe(false)
   })
 })

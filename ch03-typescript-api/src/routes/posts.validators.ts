@@ -1,3 +1,5 @@
+// #region base
+// src/routes/posts.ts
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
@@ -9,6 +11,7 @@ const createPostSchema = z.object({
   body: z.string().min(1),
   tags: z.array(z.string()).max(5).optional(),
 })
+// #endregion
 
 // #region list-query
 // src/routes/posts.ts
@@ -32,7 +35,7 @@ app.get(
 // #region param
 // src/routes/posts.ts
 const postIdParam = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
 })
 
 app.get(
