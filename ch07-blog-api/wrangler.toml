@@ -1,16 +1,16 @@
-name = "ch07-blog-api"
+# wrangler.toml
+name = "blog-api"
 main = "src/index.ts"
 compatibility_date = "2025-12-01"
 
 [vars]
-JWT_SECRET = "blog-secret-change-in-production"
+JWT_SECRET = "your-secret-key-change-in-production"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "blog-db"
-database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-migrations_dir = "drizzle"
+database_id = "<your-database-id>"
 
 [[r2_buckets]]
-binding = "IMAGES"
+binding = "IMAGES_BUCKET"
 bucket_name = "blog-images"

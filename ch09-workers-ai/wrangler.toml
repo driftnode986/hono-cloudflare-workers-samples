@@ -1,6 +1,7 @@
-name = "ch09-workers-ai"
-main = "src/index.ts"
-compatibility_date = "2025-12-01"
-
+# wrangler.toml
 [ai]
 binding = "AI"
+
+[[kv_namespaces]]
+binding = "AI_CACHE"
+id = "<your-kv-namespace-id>"

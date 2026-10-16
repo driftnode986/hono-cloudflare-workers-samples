@@ -1,15 +1,24 @@
-name = "ch05-r2-kv"
+# wrangler.toml
+name = "my-hono-app"
 main = "src/index.ts"
 compatibility_date = "2025-12-01"
 
+# D1 データベース
+[[d1_databases]]
+binding = "DB"
+database_name = "my-blog-db"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# R2 バケット
 [[r2_buckets]]
-binding = "BUCKET"
+binding = "FILES_BUCKET"
 bucket_name = "my-files"
 
+# KV ネームスペース
 [[kv_namespaces]]
-binding = "CACHE"
-id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+binding = "CACHE_KV"
+id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 [[kv_namespaces]]
-binding = "SESSIONS"
-id = "yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy"
+binding = "SESSION_KV"
+id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"

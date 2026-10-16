@@ -1,77 +1,191 @@
-// src/routes/posts.ts — Blog posts CRUD routes
-import { Hono } from 'hono';
-import { z } from 'zod';
-import { zValidator } from '@hono/zod-validator';
-import { drizzle } from 'drizzle-orm/d1';
-import { eq } from 'drizzle-orm';
-import { posts } from '../db/schema';
-import { authMiddleware } from '../middleware/auth';
+// src/routes/posts.ts
+import { Hono } from 'hono'
+import { zValidator } from '@hono/zod-validator'
+import { z } from 'zod'
+import { eq, desc, and, count } from 'drizzle-orm'
+import { createDb } from '../db'
+import { posts, users } from '../db/schema'
+import { authMiddleware } from '../middleware/auth'
+import type { Bindings } from '../types'
 
-type Env = {
-  Bindings: { DB: D1Database; IMAGES: R2Bucket; JWT_SECRET: string };
-  Variables: { userId: string; userRole: string };
-};
+const postsRouter = new Hono<{ Bindings: Bindings }>()
 
+const listQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(10)
+})
+
+postsRouter.get('/', zValidator('query', listQuerySchema), async (c) => {
+  const { page, limit } = c.req.valid('query')
+  const db = createDb(c.env.DB)
+  const offset = (page - 1) * limit
+
+  const [items, totalResult] = await Promise.all([
+    db.select({
+      id: posts.id,
+      slug: posts.slug,
+      title: posts.title,
+      excerpt: posts.excerpt,
+      coverImageKey: posts.coverImageKey,
+      authorName: users.name,
+      status: posts.status,
+      createdAt: posts.createdAt
+    })
+      .from(posts)
+      .innerJoin(users, eq(posts.authorId, users.id))
+      .where(eq(posts.status, 'published'))
+      .orderBy(desc(posts.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db.select({ total: count() })
+      .from(posts)
+      .where(eq(posts.status, 'published'))
+  ])
+
+  const total = totalResult[0].total
+
+  return c.json({
+    posts: items,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
+    }
+  })
+})
 const createPostSchema = z.object({
   title: z.string().min(1).max(200),
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
-  body: z.string().min(1),
+  content: z.string().min(1),
   excerpt: z.string().max(300).optional(),
-  status: z.enum(['draft', 'published']).default('draft'),
-});
+  slug: z.string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-z0-9-]+$/, 'slug は英小文字・数字・ハイフンのみ'),
+  status: z.enum(['draft', 'published']).default('draft')
+})
 
-const app = new Hono<Env>();
+postsRouter.post(
+  '/',
+  authMiddleware,
+  zValidator('json', createPostSchema),
+  async (c) => {
+    const body = c.req.valid('json')
+    const payload = c.get('jwtPayload')
+    const authorId = parseInt(payload.sub as string, 10)
+    const db = createDb(c.env.DB)
 
-// Public: list published posts
-app.get('/', async (c) => {
-  const db = drizzle(c.env.DB);
-  const allPosts = await db
-    .select()
+    const existing = await db.query.posts.findFirst({
+      where: eq(posts.slug, body.slug)
+    })
+    if (existing) {
+      return c.json({ error: 'Slug already exists' }, 409)
+    }
+
+    const result = await db.insert(posts).values({
+      ...body,
+      authorId
+    }).returning()
+
+    return c.json(result[0], 201)
+  }
+)
+const updatePostSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  content: z.string().min(1).optional(),
+  excerpt: z.string().max(300).optional(),
+  status: z.enum(['draft', 'published']).optional()
+})
+
+postsRouter.put(
+  '/:slug',
+  authMiddleware,
+  zValidator('json', updatePostSchema),
+  async (c) => {
+    const slug = c.req.param('slug')
+    const body = c.req.valid('json')
+    const payload = c.get('jwtPayload')
+    const authorId = parseInt(payload.sub as string, 10)
+    const db = createDb(c.env.DB)
+
+    const existing = await db.query.posts.findFirst({
+      where: and(eq(posts.slug, slug), eq(posts.authorId, authorId))
+    })
+    if (!existing) {
+      return c.json({ error: 'Post not found or not authorized' }, 404)
+    }
+
+    const result = await db.update(posts)
+      .set({
+        ...body,
+        updatedAt: new Date().toISOString()
+      })
+      .where(eq(posts.slug, slug))
+      .returning()
+
+    return c.json(result[0])
+  }
+)
+postsRouter.delete('/:slug', authMiddleware, async (c) => {
+  const slug = c.req.param('slug')
+  const payload = c.get('jwtPayload')
+  const authorId = parseInt(payload.sub as string, 10)
+  const db = createDb(c.env.DB)
+
+  const existing = await db.query.posts.findFirst({
+    where: and(eq(posts.slug, slug), eq(posts.authorId, authorId))
+  })
+  if (!existing) {
+    return c.json({ error: 'Post not found or not authorized' }, 404)
+  }
+
+  if (existing.coverImageKey) {
+    await c.env.IMAGES_BUCKET.delete(existing.coverImageKey)
+  }
+
+  await db.delete(posts).where(eq(posts.slug, slug))
+
+  return c.json({ message: 'Post deleted' })
+})
+
+export { postsRouter }
+// src/routes/posts.ts の /:slug エンドポイントを拡張
+import { markdownToHtml } from '../lib/markdown'
+
+postsRouter.get('/:slug', async (c) => {
+  const slug = c.req.param('slug')
+  const format = c.req.query('format')
+  const db = createDb(c.env.DB)
+
+  const post = await db.select({
+    id: posts.id,
+    slug: posts.slug,
+    title: posts.title,
+    content: posts.content,
+    excerpt: posts.excerpt,
+    coverImageKey: posts.coverImageKey,
+    authorName: users.name,
+    status: posts.status,
+    createdAt: posts.createdAt,
+    updatedAt: posts.updatedAt
+  })
     .from(posts)
-    .where(eq(posts.status, 'published'))
-    .all();
-  return c.json({ data: allPosts });
-});
+    .innerJoin(users, eq(posts.authorId, users.id))
+    .where(eq(posts.slug, slug))
+    .limit(1)
 
-// Public: get post by slug
-app.get('/:slug', async (c) => {
-  const slug = c.req.param('slug');
-  const db = drizzle(c.env.DB);
-  const post = await db.select().from(posts).where(eq(posts.slug, slug)).get();
-  if (!post) return c.json({ error: 'Post not found' }, 404);
-  return c.json(post);
-});
+  if (post.length === 0) {
+    return c.json({ error: 'Post not found' }, 404)
+  }
 
-// Protected: create post
-app.post('/', authMiddleware, zValidator('json', createPostSchema), async (c) => {
-  const data = c.req.valid('json');
-  const userId = c.get('userId');
-  const db = drizzle(c.env.DB);
+  const result = post[0]
 
-  const result = await db.insert(posts).values({
-    ...data,
-    authorId: userId,
-    publishedAt: data.status === 'published' ? new Date().toISOString() : null,
-  }).returning().get();
+  if (format === 'html') {
+    return c.json({
+      ...result,
+      contentHtml: markdownToHtml(result.content)
+    })
+  }
 
-  return c.json(result, 201);
-});
-
-// Protected: upload cover image
-app.post('/:id/cover', authMiddleware, async (c) => {
-  const id = Number(c.req.param('id'));
-  const body = await c.req.arrayBuffer();
-  const contentType = c.req.header('Content-Type') ?? 'image/jpeg';
-  const key = `covers/${id}-${Date.now()}`;
-
-  await c.env.IMAGES.put(key, body, {
-    httpMetadata: { contentType },
-  });
-
-  const db = drizzle(c.env.DB);
-  await db.update(posts).set({ coverImageKey: key }).where(eq(posts.id, id));
-
-  return c.json({ message: 'Cover uploaded', key }, 201);
-});
-
-export default app;
+  return c.json(result)
+})

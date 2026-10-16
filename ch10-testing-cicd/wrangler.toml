@@ -1,8 +1,38 @@
-name = "ch10-testing-cicd"
+# wrangler.toml
+name = "saas-api"
 main = "src/index.ts"
-compatibility_date = "2025-12-01"
+compatibility_date = "2026-01-01"
 
-[[d1_databases]]
+[vars]
+ENVIRONMENT = "development"
+
+[env.staging]
+[env.staging.vars]
+ENVIRONMENT = "staging"
+
+[[env.staging.d1_databases]]
 binding = "DB"
-database_name = "test-db"
-database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+database_name = "saas-db-staging"
+database_id = "<staging-database-id>"
+
+[[env.staging.kv_namespaces]]
+binding = "PLAN_KV"
+id = "<staging-kv-id>"
+
+[env.production]
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "saas-db-production"
+database_id = "<production-database-id>"
+
+[[env.production.kv_namespaces]]
+binding = "PLAN_KV"
+id = "<production-kv-id>"
+[observability]
+enabled = true
+[[routes]]
+pattern = "api.example.com"
+custom_domain = true

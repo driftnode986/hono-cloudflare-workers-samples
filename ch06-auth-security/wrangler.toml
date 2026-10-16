@@ -1,10 +1,8 @@
-name = "ch06-auth-security"
-main = "src/index.ts"
-compatibility_date = "2025-12-01"
-
+# wrangler.toml
 [vars]
-JWT_SECRET = "your-secret-key-change-in-production"
+ENVIRONMENT = "development"
+ALLOWED_ORIGIN = "http://localhost:3000"
 
-[[kv_namespaces]]
-binding = "RATE_LIMIT"
-id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+[env.production.vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGIN = "https://myapp.example.com"

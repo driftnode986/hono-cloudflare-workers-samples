@@ -1,30 +1,26 @@
-name = "ch08-saas-mvp"
+# wrangler.toml
+name = "saas-api"
 main = "src/index.ts"
-compatibility_date = "2025-12-01"
+compatibility_date = "2026-01-01"
 
 [vars]
-JWT_SECRET = "saas-secret-change-in-production"
+JWT_SECRET = "your-secret-key-change-in-production"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "saas-db"
-database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-migrations_dir = "drizzle"
+database_id = "<your-database-id>"
+
+[[kv_namespaces]]
+binding = "PLAN_KV"
+id = "<your-kv-namespace-id>"
 
 [[queues.producers]]
-binding = "TASK_QUEUE"
-queue = "saas-tasks"
+queue = "saas-jobs"
+binding = "JOB_QUEUE"
 
 [[queues.consumers]]
-queue = "saas-tasks"
+queue = "saas-jobs"
 max_batch_size = 10
-max_batch_timeout = 30
-
-[durable_objects]
-bindings = [
-  { name = "RATE_LIMITER", class_name = "RateLimiter" }
-]
-
-[[migrations]]
-tag = "v1"
-new_classes = ["RateLimiter"]
+max_retries = 3
+dead_letter_queue = "saas-jobs-dlq"

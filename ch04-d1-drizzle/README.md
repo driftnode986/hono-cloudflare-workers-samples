@@ -1,88 +1,36 @@
-# 第4章: D1 データベース -- Drizzle ORM で型安全なデータ操作
+# 第4章 D1 と Drizzle ORM
 
-Cloudflare D1 (SQLite ベースのデータベース) と Drizzle ORM を組み合わせて、型安全なデータベース操作を行うサンプルです。スキーマ定義、マイグレーション、CRUD 操作の一連の流れを扱います。
+D1 のセットアップ、Drizzle のスキーマ、マイグレーション、CRUD を扱います。
 
-## この章で学ぶこと
-
-- D1 データベースの作成とバインディング設定
-- `sqliteTable` による Drizzle ORM のスキーマ定義 (カラム型、主キー、ユニーク制約)
-- `$defaultFn` によるデフォルト値の自動生成
-- Drizzle Kit を使ったマイグレーションの生成と適用 (`generate` / `migrate`)
-- `select` / `insert` / `update` / `delete` + `returning()` による CRUD 操作
-- `eq()` 演算子を使ったクエリフィルタリング
+書籍の本文のコードを、書かれているファイルパスのまま配置しています。
 
 ## ファイル構成
 
 ```
 ch04-d1-drizzle/
-  src/
-    index.ts          # スキーマ定義と CRUD ルート
-  package.json        # drizzle-orm, drizzle-kit を含む依存関係
-  tsconfig.json
-  wrangler.toml       # D1 バインディング設定
+  drizzle.config.ts                 # drizzle-kit の設定(リモート D1 接続版)
+  src/db/schema.ts                  # テーブル定義
+  src/db/index.ts                   # Drizzle クライアントの生成
+  src/index.ts                      # エントリポイント
+  src/routes/posts.ts               # 記事の CRUD ルート
+  wrangler.toml                     # Wrangler 設定(D1 バインディング)
+  package.json, tsconfig.json  # 依存の版と型検査の設定
 ```
 
-## セットアップ
+## セットアップとコマンド
 
 ```bash
 npm install
-
-# D1 データベースを作成
-wrangler d1 create my-database
-
-# wrangler.toml の database_id を返却された値に更新
-
-# マイグレーションファイルを生成
-npm run db:generate
-
-# ローカル D1 にマイグレーションを適用
-npm run db:migrate
+npm run check    # 型検査 (tsc --noEmit)
+npm run db:generate   # マイグレーションの生成
 ```
 
-## 実行方法
+開発サーバー(`npm run dev`)は、本文の通りに `wrangler.toml` のバインディングを用意してから起動してください。
 
-```bash
-npm run dev
-```
+## バインディングについて
 
-開発サーバーが `http://localhost:8787` で起動します。以下の curl コマンドで CRUD 操作を確認できます。
-
-```bash
-# 記事を作成
-curl -X POST http://localhost:8787/posts \
-  -H 'Content-Type: application/json' \
-  -d '{"title":"Hello D1","body":"Drizzle ORM で型安全な DB 操作","slug":"hello-d1"}'
-
-# 記事一覧を取得
-curl http://localhost:8787/posts
-
-# 記事を ID で取得
-curl http://localhost:8787/posts/1
-
-# 記事を更新
-curl -X PUT http://localhost:8787/posts/1 \
-  -H 'Content-Type: application/json' \
-  -d '{"title":"Updated Title"}'
-
-# 記事を削除
-curl -X DELETE http://localhost:8787/posts/1
-```
-
-## 使用する主要 API
-
-- **`drizzle(c.env.DB)`** -- D1 バインディングから Drizzle クライアントを生成
-- **`sqliteTable()`** -- SQLite テーブルのスキーマ定義
-- **`text()` / `integer()`** -- カラム型の指定
-- **`db.select().from(table)`** -- SELECT クエリ
-- **`db.insert(table).values(data).returning()`** -- INSERT (挿入結果を返却)
-- **`db.update(table).set(data).where(condition)`** -- UPDATE
-- **`db.delete(table).where(condition)`** -- DELETE
-- **`eq(column, value)`** -- WHERE 条件の等値比較
+`wrangler.toml` の `database_id` は書籍と同じダミー値です。実際に使う場合は `npx wrangler d1 create` で作成した値に置き換えてください。
 
 ## 本書との対応
 
-本書 第4章「D1 データベース -- Drizzle ORM で型安全なデータ操作」のコードサンプルに対応します。
-
-## 無料枠メモ
-
-この章のサンプルは Cloudflare Workers 無料プランで動作します。D1 の無料枠 (5M reads/日, 100K writes/日, 5GB ストレージ) は本書のサンプル規模では十分余裕があります。
+本書 第4章 D1 と Drizzle ORM のコードサンプルです。

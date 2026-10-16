@@ -2,6 +2,7 @@
   "name": "ch10-testing-cicd",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
@@ -9,14 +10,15 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.7.0",
-    "drizzle-orm": "^0.45.0"
+    "hono": "^4.12.23"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "@cloudflare/workers-types": "^4.20250525.0",
-    "wrangler": "^4.14.0",
-    "vitest": "^3.2.0",
-    "@cloudflare/vitest-pool-workers": "^0.8.0"
+    "@cloudflare/vitest-pool-workers": "~0.16.0",
+    "@cloudflare/workers-types": "^4.20260702.0",
+    "@vitest/runner": "^4.1.0",
+    "@vitest/snapshot": "^4.1.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.1.0",
+    "wrangler": "4.105.0"
   }
 }

@@ -1,33 +1,29 @@
-// src/db/schema.ts — SaaS MVP database schema
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+// src/db/schema.ts
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 
 export const tenants = sqliteTable('tenants', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
-  slug: text('slug').notNull().unique(),
-  plan: text('plan', { enum: ['free', 'pro', 'enterprise'] }).notNull().default('free'),
-  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
-});
+  plan: text('plan').notNull().default('free'),
+  createdAt: text('created_at').default('(datetime(\'now\'))'),
+})
 
 export const apiKeys = sqliteTable('api_keys', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  id: text('id').primaryKey(),
   tenantId: text('tenant_id').notNull().references(() => tenants.id),
-  key: text('key').notNull().unique(),
+  keyHash: text('key_hash').notNull(),
+  keyPrefix: text('key_prefix').notNull(),
   name: text('name').notNull(),
-  scopes: text('scopes').notNull().default('read'),
   lastUsedAt: text('last_used_at'),
-  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
-});
+  createdAt: text('created_at').default('(datetime(\'now\'))'),
+})
 
-export const tasks = sqliteTable('tasks', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const resources = sqliteTable('resources', {
+  id: text('id').primaryKey(),
   tenantId: text('tenant_id').notNull().references(() => tenants.id),
-  type: text('type').notNull(),
-  payload: text('payload').notNull(),
-  status: text('status', { enum: ['pending', 'processing', 'completed', 'failed'] })
-    .notNull()
-    .default('pending'),
-  result: text('result'),
-  createdAt: text('created_at').notNull().$defaultFn(() => new Date().toISOString()),
-  completedAt: text('completed_at'),
-});
+  title: text('title').notNull(),
+  content: text('content'),
+  status: text('status').notNull().default('draft'),
+  createdAt: text('created_at').default('(datetime(\'now\'))'),
+  updatedAt: text('updated_at'),
+})

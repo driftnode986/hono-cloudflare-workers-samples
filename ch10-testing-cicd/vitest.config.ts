@@ -1,12 +1,11 @@
-// vitest.config.ts — Vitest with Cloudflare Workers pool
-import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
+// vitest.config.ts
+import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
+import { defineConfig } from 'vitest/config'
 
-export default defineWorkersConfig({
-  test: {
-    poolOptions: {
-      workers: {
-        wrangler: { configPath: './wrangler.toml' },
-      },
-    },
-  },
-});
+export default defineConfig({
+  plugins: [
+    cloudflareTest({
+      wrangler: { configPath: './wrangler.toml' },
+    }),
+  ],
+})

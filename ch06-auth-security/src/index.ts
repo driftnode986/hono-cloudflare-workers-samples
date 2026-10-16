@@ -1,129 +1,85 @@
-// src/index.ts — Ch06: Authentication and Security
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import { jwt, sign, verify } from 'hono/jwt';
-import { z } from 'zod';
-import { zValidator } from '@hono/zod-validator';
+// src/index.ts
+import { Hono } from 'hono'
+import { authMiddleware } from './middleware/auth'
+import type { JwtVariables } from 'hono/jwt'
 
 type Bindings = {
-  JWT_SECRET: string;
-  RATE_LIMIT: KVNamespace;
-};
+  JWT_SECRET: string
+  DB: D1Database
+}
 
-type JWTPayload = {
-  sub: string;
-  email: string;
-  role: string;
-  exp: number;
-};
+const app = new Hono<{ Bindings: Bindings; Variables: JwtVariables }>()
 
-const app = new Hono<{ Bindings: Bindings; Variables: { jwtPayload: JWTPayload } }>();
+// 認証不要のルート
+app.get('/posts', async (c) => {
+  return c.json({ posts: [] })
+})
 
-// --- CORS configuration ---
+// 認証が必要なルート
+app.use('/admin/*', authMiddleware)
+
+app.get('/admin/profile', (c) => {
+  const payload = c.get('jwtPayload')
+  return c.json({
+    userId: payload.sub,
+    role: payload.role,
+  })
+})
+
+app.post('/admin/posts', async (c) => {
+  const payload = c.get('jwtPayload')
+  // payload.sub でユーザー ID を取得して記事を作成
+  return c.json({ message: 'Post created' }, 201)
+})
+// src/index.ts
+app.use('/admin/*', authMiddleware)
+app.delete('/admin/posts/:id', requireRole('admin'), async (c) => {
+  // admin ロールのみ削除可能
+  return c.body(null, 204)
+})
+// src/index.ts
+// 外部サービスからの Webhook
+app.post('/webhook/payment', apiKeyAuth, async (c) => {
+  const body = await c.req.json()
+  // 決済処理
+  return c.json({ received: true })
+})
+// src/index.ts
+import { cors } from 'hono/cors'
+
+// 開発環境: 全オリジンを許可
+app.use('/api/*', cors())
+
+// 本番環境: 特定オリジンのみ許可
 app.use(
   '/api/*',
   cors({
-    origin: ['http://localhost:3000', 'https://example.com'],
+    origin: 'https://myapp.example.com',
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowHeaders: ['Content-Type', 'Authorization'],
+    exposeHeaders: ['X-Total-Count'],
     maxAge: 86400,
+    credentials: true,
   })
-);
+)
+// src/index.ts
+import { secureHeaders } from 'hono/secure-headers'
 
-// --- Rate limiting middleware ---
-async function rateLimiter(
-  kv: KVNamespace,
-  key: string,
-  limit: number,
-  windowSec: number
-): Promise<{ allowed: boolean; remaining: number }> {
-  const now = Math.floor(Date.now() / 1000);
-  const windowKey = `rate:${key}:${Math.floor(now / windowSec)}`;
-  const current = Number(await kv.get(windowKey)) || 0;
+app.use(secureHeaders())
+// src/index.ts
+app.use(
+  '/api/*',
+  rateLimit({
+    windowMs: 60 * 1000, // 1 分
+    max: 100,            // 1 分あたり 100 リクエスト
+  })
+)
 
-  if (current >= limit) {
-    return { allowed: false, remaining: 0 };
-  }
-
-  await kv.put(windowKey, String(current + 1), { expirationTtl: windowSec });
-  return { allowed: true, remaining: limit - current - 1 };
-}
-
-app.use('/api/*', async (c, next) => {
-  const ip = c.req.header('CF-Connecting-IP') ?? 'unknown';
-  const { allowed, remaining } = await rateLimiter(c.env.RATE_LIMIT, ip, 100, 60);
-
-  c.header('X-RateLimit-Remaining', String(remaining));
-
-  if (!allowed) {
-    return c.json({ error: 'Too many requests' }, 429);
-  }
-
-  await next();
-});
-
-// --- Password hashing with Web Crypto ---
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
-  const hash = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-    keyMaterial,
-    256
-  );
-  const hashArray = new Uint8Array(hash);
-  const combined = new Uint8Array(salt.length + hashArray.length);
-  combined.set(salt);
-  combined.set(hashArray, salt.length);
-  return btoa(String.fromCharCode(...combined));
-}
-
-// --- Auth schemas ---
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
-
-// --- Public routes ---
-app.post('/api/auth/login', zValidator('json', loginSchema), async (c) => {
-  const { email, password } = c.req.valid('json');
-
-  // In production: look up user in D1 and verify password hash
-  if (email !== 'admin@example.com' || password !== 'password123') {
-    return c.json({ error: 'Invalid credentials' }, 401);
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const payload: JWTPayload = {
-    sub: 'user-001',
-    email,
-    role: 'admin',
-    exp: now + 3600, // 1 hour
-  };
-
-  const token = await sign(payload, c.env.JWT_SECRET);
-  return c.json({ token, expiresIn: 3600 });
-});
-
-// --- Protected routes ---
-app.use('/api/protected/*', jwt({ secret: (c) => c.env.JWT_SECRET }));
-
-app.get('/api/protected/profile', (c) => {
-  const payload = c.get('jwtPayload') as JWTPayload;
-  return c.json({
-    userId: payload.sub,
-    email: payload.email,
-    role: payload.role,
-  });
-});
-
-app.get('/api/protected/admin', (c) => {
-  const payload = c.get('jwtPayload') as JWTPayload;
-  if (payload.role !== 'admin') {
-    return c.json({ error: 'Forbidden: admin only' }, 403);
-  }
-  return c.json({ message: 'Admin area', userId: payload.sub });
-});
-
-export default app;
+// ログイン API はより厳しく
+app.use(
+  '/auth/login',
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 分
+    max: 5,                    // 15 分あたり 5 回
+  })
+)
