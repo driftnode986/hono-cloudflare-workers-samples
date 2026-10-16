@@ -1,4 +1,5 @@
 // src/lib/password.ts
+// #region hash-key
 export const hashPassword = async (password: string): Promise<string> => {
   const salt = crypto.getRandomValues(new Uint8Array(16))
   const encoder = new TextEncoder()
@@ -20,7 +21,9 @@ export const hashPassword = async (password: string): Promise<string> => {
     keyMaterial,
     256
   )
+// #endregion
 
+// #region hash-encode
   const saltHex = Array.from(salt)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
@@ -30,7 +33,9 @@ export const hashPassword = async (password: string): Promise<string> => {
 
   return `${saltHex}:${hashHex}`
 }
+// #endregion
 
+// #region verify-key
 export const verifyPassword = async (
   password: string,
   stored: string
@@ -60,9 +65,13 @@ export const verifyPassword = async (
     256
   )
 
+// #endregion
+
+// #region verify-compare
   const hashHex = Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
 
   return hashHex === expectedHashHex
 }
+// #endregion

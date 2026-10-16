@@ -1,8 +1,25 @@
 # wrangler.toml
+name = "auth-security"
+main = "src/index.ts"
+compatibility_date = "2025-12-01"
+
 [vars]
 ENVIRONMENT = "development"
 ALLOWED_ORIGIN = "http://localhost:3000"
+# 開発用。本番では wrangler secret put JWT_SECRET で設定する
+JWT_SECRET = "dev-secret-do-not-use-in-production"
 
 [env.production.vars]
 ENVIRONMENT = "production"
 ALLOWED_ORIGIN = "https://myapp.example.com"
+
+# #region bindings
+[[d1_databases]]
+binding = "DB"
+database_name = "my-blog-db"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+[[kv_namespaces]]
+binding = "RATE_KV"
+id = "dddddddddddddddddddddddddddddddd"
+# #endregion

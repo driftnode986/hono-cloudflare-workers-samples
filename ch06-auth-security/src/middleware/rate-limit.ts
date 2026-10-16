@@ -1,4 +1,5 @@
 // src/middleware/rate-limit.ts
+// #region rate-limit-setup
 import { createMiddleware } from 'hono/factory'
 
 type Env = {
@@ -12,7 +13,9 @@ type RateLimitOptions = {
   max: number        // ウィンドウ内の最大リクエスト数
   keyGenerator?: (c: any) => string
 }
+// #endregion
 
+// #region rate-limit-check
 export const rateLimit = (options: RateLimitOptions) => {
   const { windowMs, max, keyGenerator } = options
 
@@ -32,6 +35,9 @@ export const rateLimit = (options: RateLimitOptions) => {
       )
     }
 
+// #endregion
+
+// #region rate-limit-count
     c.executionCtx.waitUntil(
       c.env.RATE_KV.put(kvKey, String(current + 1), {
         expirationTtl: Math.ceil(windowMs / 1000) + 60,
@@ -44,3 +50,4 @@ export const rateLimit = (options: RateLimitOptions) => {
     await next()
   })
 }
+// #endregion

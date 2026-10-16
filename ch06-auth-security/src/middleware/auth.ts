@@ -1,4 +1,5 @@
 // src/middleware/auth.ts
+// #region auth-middleware
 import { jwt } from 'hono/jwt'
 import { createMiddleware } from 'hono/factory'
 import type { JwtVariables } from 'hono/jwt'
@@ -15,9 +16,11 @@ export const authMiddleware = createMiddleware<Env>(async (c, next) => {
     secret: c.env.JWT_SECRET,
     alg: 'HS256',
   })
-  return jwtMiddleware(c, next)
+  return await jwtMiddleware(c, next)
 })
-// src/middleware/auth.ts
+// #endregion
+
+// #region require-role
 export const requireRole = (...roles: string[]) =>
   createMiddleware<Env>(async (c, next) => {
     const payload = c.get('jwtPayload')
@@ -28,3 +31,4 @@ export const requireRole = (...roles: string[]) =>
 
     await next()
   })
+// #endregion

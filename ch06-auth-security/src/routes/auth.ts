@@ -1,8 +1,11 @@
 // src/routes/auth.ts
+// #region login-setup
 import { Hono } from 'hono'
 import { sign } from 'hono/jwt'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
+import { verifyPassword } from '../lib/password'
+import { findUserByEmail } from '../lib/users'
 
 type Bindings = {
   JWT_SECRET: string
@@ -15,7 +18,9 @@ const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
 })
+// #endregion
 
+// #region login-handler
 app.post('/auth/login', zValidator('json', loginSchema), async (c) => {
   const { email, password } = c.req.valid('json')
 
@@ -40,3 +45,4 @@ app.post('/auth/login', zValidator('json', loginSchema), async (c) => {
 })
 
 export default app
+// #endregion

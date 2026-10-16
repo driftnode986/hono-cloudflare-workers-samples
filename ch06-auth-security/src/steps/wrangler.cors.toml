@@ -1,0 +1,10 @@
+# wrangler.toml (6.5 の時点。CORS の環境別設定)
+# #region cors-vars
+[vars]
+ENVIRONMENT = "development"
+ALLOWED_ORIGIN = "http://localhost:3000"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGIN = "https://myapp.example.com"
+# #endregion

@@ -1,4 +1,5 @@
 // src/index.ts
+// #region app-setup
 import { Hono } from 'hono'
 import { authMiddleware } from './middleware/auth'
 import type { JwtVariables } from 'hono/jwt'
@@ -17,7 +18,9 @@ app.get('/posts', async (c) => {
 
 // 認証が必要なルート
 app.use('/admin/*', authMiddleware)
+// #endregion
 
+// #region admin-routes
 app.get('/admin/profile', (c) => {
   const payload = c.get('jwtPayload')
   return c.json({
@@ -31,24 +34,33 @@ app.post('/admin/posts', async (c) => {
   // payload.sub でユーザー ID を取得して記事を作成
   return c.json({ message: 'Post created' }, 201)
 })
-// src/index.ts
-app.use('/admin/*', authMiddleware)
+// #endregion
+
+// #region admin-delete
+import { requireRole } from './middleware/auth'
+
 app.delete('/admin/posts/:id', requireRole('admin'), async (c) => {
   // admin ロールのみ削除可能
   return c.body(null, 204)
 })
-// src/index.ts
+// #endregion
+
+// #region webhook
+import { apiKeyAuth } from './middleware/api-key'
+
 // 外部サービスからの Webhook
 app.post('/webhook/payment', apiKeyAuth, async (c) => {
   const body = await c.req.json()
   // 決済処理
   return c.json({ received: true })
 })
-// src/index.ts
+// #endregion
+
+// #region cors
 import { cors } from 'hono/cors'
 
-// 開発環境: 全オリジンを許可
-app.use('/api/*', cors())
+// 開発環境: 全オリジンを許可 (本番では使わない。どちらか一方だけを登録する)
+// app.use('/api/*', cors())
 
 // 本番環境: 特定オリジンのみ許可
 app.use(
@@ -62,11 +74,17 @@ app.use(
     credentials: true,
   })
 )
-// src/index.ts
+// #endregion
+
+// #region secure-headers
 import { secureHeaders } from 'hono/secure-headers'
 
 app.use(secureHeaders())
-// src/index.ts
+// #endregion
+
+// #region rate-limit-usage
+import { rateLimit } from './middleware/rate-limit'
+
 app.use(
   '/api/*',
   rateLimit({
@@ -83,3 +101,15 @@ app.use(
     max: 5,                    // 15 分あたり 5 回
   })
 )
+// #endregion
+
+// #region mount-auth
+import authRoutes from './routes/auth'
+
+app.route('/', authRoutes)
+// #endregion
+
+// 動作確認用 (CORS・セキュリティヘッダー・レート制限のテストで使う)
+app.get('/api/ping', (c) => c.json({ pong: true }))
+
+export default app

@@ -1,4 +1,5 @@
 // src/middleware/cors-config.ts
+// #region cors-config
 import { cors } from 'hono/cors'
 import { createMiddleware } from 'hono/factory'
 
@@ -26,3 +27,4 @@ export const corsConfig = createMiddleware<Env>(async (c, next) => {
   })
   return middleware(c, next)
 })
+// #endregion
