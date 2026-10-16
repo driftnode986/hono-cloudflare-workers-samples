@@ -4,15 +4,16 @@ import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test'
 import { describe, it, expect, beforeAll } from 'vitest'
 import app from '../src/index'
 
+// 第 4 章のマイグレーションで作る posts テーブル (thumbnail_key 列はまだ無い)
 const sql = [
-  `CREATE TABLE posts (id text PRIMARY KEY, title text NOT NULL, body text NOT NULL, thumbnail_key text, created_at text NOT NULL)`,
+  `CREATE TABLE posts (id text PRIMARY KEY NOT NULL, title text NOT NULL, body text NOT NULL, slug text NOT NULL, published_at text, created_at text NOT NULL, updated_at text NOT NULL)`,
 ]
 
 beforeAll(async () => {
   for (const s of sql) await env.DB.prepare(s).run()
   await env.DB
-    .prepare('INSERT INTO posts VALUES (?, ?, ?, ?, ?)')
-    .bind('p1', 'First', 'Body', 'images/p1.png', '2026-05-27T00:00:00.000Z')
+    .prepare('INSERT INTO posts VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind('p1', 'First', 'Body', 'first', null, '2026-05-27T00:00:00.000Z', '2026-05-27T00:00:00.000Z')
     .run()
 })
 
@@ -28,9 +29,14 @@ describe('kvCache on GET /posts', () => {
     const first = await call('/posts')
     expect(first.status).toBe(200)
     expect(first.headers.get('X-Cache')).toBe('MISS')
-    const body = await first.json<{ posts: { id: string; thumbnailKey: string }[] }>()
+    const body = await first.json<{ posts: Record<string, string>[] }>()
     expect(body.posts).toHaveLength(1)
-    expect(body.posts[0]).toMatchObject({ id: 'p1', thumbnailKey: 'images/p1.png' })
+    // 列を絞っているので、thumbnail_key 列が無いテーブルでも動く
+    expect(body.posts[0]).toEqual({
+      id: 'p1',
+      title: 'First',
+      createdAt: '2026-05-27T00:00:00.000Z',
+    })
 
     const stored = await env.CACHE_KV.get('cache:http://localhost/posts')
     expect(JSON.parse(stored!)).toEqual(body)

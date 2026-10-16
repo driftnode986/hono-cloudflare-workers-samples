@@ -43,6 +43,36 @@ app.post('/auth/login', zValidator('json', loginSchema), async (c) => {
 
   return c.json({ token, expiresIn: 3600 })
 })
+// #endregion
 
+// #region register
+import { hashPassword } from '../lib/password'
+
+const registerSchema = z.object({
+  email: z.string().email().max(254),
+  password: z.string().min(8).max(128),
+})
+
+app.post('/auth/register', zValidator('json', registerSchema), async (c) => {
+  const { email, password } = c.req.valid('json')
+
+  if (await findUserByEmail(c.env.DB, email)) {
+    return c.json({ error: 'Email already registered' }, 409)
+  }
+
+  // role はクライアントから受け取らず、常に user にする
+  const id = crypto.randomUUID()
+  await c.env.DB
+    .prepare(
+      'INSERT INTO users (id, email, password_hash, role) VALUES (?, ?, ?, ?)'
+    )
+    .bind(id, email, await hashPassword(password), 'user')
+    .run()
+
+  return c.json({ id }, 201)
+})
+// #endregion
+
+// #region login-export
 export default app
 // #endregion

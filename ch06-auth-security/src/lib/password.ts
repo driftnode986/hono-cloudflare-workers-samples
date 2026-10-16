@@ -68,10 +68,14 @@ export const verifyPassword = async (
 // #endregion
 
 // #region verify-compare
-  const hashHex = Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
+  // 定数時間で比較する (Workers 独自の crypto.subtle.timingSafeEqual)
+  const expected = new Uint8Array(
+    expectedHashHex.match(/.{2}/g)!.map((byte) => parseInt(byte, 16))
+  )
+  if (expected.byteLength !== hash.byteLength) {
+    return false
+  }
 
-  return hashHex === expectedHashHex
+  return crypto.subtle.timingSafeEqual(hash, expected)
 }
 // #endregion

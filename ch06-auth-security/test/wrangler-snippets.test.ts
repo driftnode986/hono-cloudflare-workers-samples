@@ -3,7 +3,6 @@
 import { describe, it, expect } from 'vitest'
 import { parse } from 'smol-toml'
 import main from '../wrangler.toml?raw'
-import jwt from '../src/steps/wrangler.jwt.toml?raw'
 import cors from '../src/steps/wrangler.cors.toml?raw'
 
 type Parsed = {
@@ -14,9 +13,10 @@ type Parsed = {
 }
 
 describe('wrangler.toml snippets', () => {
-  it('6.2: the development JWT secret is in [vars]', () => {
-    const t = parse(jwt) as Parsed
-    expect(t.vars?.JWT_SECRET).toBe('dev-secret-do-not-use-in-production')
+  it('6.2: no secret is stored in wrangler.toml', () => {
+    const t = parse(main) as Parsed
+    expect(t.vars?.JWT_SECRET).toBeUndefined()
+    expect(main).not.toMatch(/JWT_SECRET|API_KEY/)
   })
 
   it('6.5: CORS variables for development and production', () => {
@@ -36,7 +36,6 @@ describe('wrangler.toml snippets', () => {
     expect(t.vars).toMatchObject(
       (parse(cors) as Parsed).vars as Record<string, string>
     )
-    expect(t.vars?.JWT_SECRET).toBe((parse(jwt) as Parsed).vars?.JWT_SECRET)
     expect(t.env?.production?.vars).toEqual((parse(cors) as Parsed).env?.production?.vars)
     expect(t.d1_databases?.[0].binding).toBe('DB')
     expect(t.kv_namespaces?.[0].binding).toBe('RATE_KV')

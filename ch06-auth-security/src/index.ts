@@ -10,7 +10,16 @@ type Bindings = {
 }
 
 const app = new Hono<{ Bindings: Bindings; Variables: JwtVariables }>()
+// #endregion
 
+// #region secure-headers
+import { secureHeaders } from 'hono/secure-headers'
+
+// ルートより前に登録する。後ろに書くと、それ以前のルートには付かない
+app.use(secureHeaders())
+// #endregion
+
+// #region public-routes
 // 認証不要のルート
 app.get('/posts', async (c) => {
   return c.json({ posts: [] })
@@ -76,12 +85,6 @@ app.use(
 )
 // #endregion
 
-// #region secure-headers
-import { secureHeaders } from 'hono/secure-headers'
-
-app.use(secureHeaders())
-// #endregion
-
 // #region rate-limit-usage
 import { rateLimit } from './middleware/rate-limit'
 
@@ -109,7 +112,11 @@ import authRoutes from './routes/auth'
 app.route('/', authRoutes)
 // #endregion
 
-// 動作確認用 (CORS・セキュリティヘッダー・レート制限のテストで使う)
+// #region api-ping
+// CORS・セキュリティヘッダー・レート制限の動作確認用 (/api/* の例)
 app.get('/api/ping', (c) => c.json({ pong: true }))
+// #endregion
 
+// #region export
 export default app
+// #endregion

@@ -21,4 +21,19 @@ describe('password hashing', () => {
     expect(await verifyPassword('same password', a)).toBe(true)
     expect(await verifyPassword('same password', b)).toBe(true)
   })
+
+  it('rejects a stored hash of the wrong length without throwing', async () => {
+    const stored = await hashPassword('correct horse')
+    const [salt, hash] = stored.split(':')
+    expect(await verifyPassword('correct horse', `${salt}:${hash.slice(2)}`)).toBe(false)
+  })
+
+  it('uses 100,000 PBKDF2 iterations, the limit in production Workers', async () => {
+    const src = (await import('../src/lib/password.ts?raw')).default
+    const counts = [...src.matchAll(/iterations:\s*([\d_]+)/g)].map((m) =>
+      Number(m[1].replace(/_/g, ''))
+    )
+    expect(counts.length).toBeGreaterThan(0)
+    for (const n of counts) expect(n).toBeLessThanOrEqual(100000)
+  })
 })

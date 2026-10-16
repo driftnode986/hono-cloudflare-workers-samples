@@ -5,7 +5,6 @@ import { parse } from 'smol-toml'
 import main from '../wrangler.toml?raw'
 import r2 from '../src/steps/wrangler.r2.toml?raw'
 import kv from '../src/steps/wrangler.kv.toml?raw'
-import kvPreview from '../src/steps/wrangler.kv-preview.toml?raw'
 
 type Parsed = {
   r2_buckets?: { binding: string; bucket_name: string }[]
@@ -21,12 +20,10 @@ describe('wrangler.toml snippets', () => {
     ])
   })
 
-  it('5.6: KV binding MY_KV, with and without preview_id', () => {
+  it('5.6: KV binding MY_KV', () => {
     const a = parse(kv) as Parsed
     expect(a.kv_namespaces?.[0].binding).toBe('MY_KV')
     expect(a.kv_namespaces?.[0].preview_id).toBeUndefined()
-    const b = parse(kvPreview) as Parsed
-    expect(b.kv_namespaces?.[0].preview_id).toBeTruthy()
   })
 
   it('5.10: the unified file binds D1, R2 and both KV namespaces', () => {

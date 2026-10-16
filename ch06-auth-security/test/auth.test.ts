@@ -1,5 +1,6 @@
 // test/auth.test.ts
 import { env } from 'cloudflare:workers'
+import { applyD1Migrations } from 'cloudflare:test'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { verify } from 'hono/jwt'
 import app from '../src/index'
@@ -7,9 +8,7 @@ import { hashPassword } from '../src/lib/password'
 import { call, tokenFor, bearer } from './helpers'
 
 beforeAll(async () => {
-  await env.DB.prepare(
-    'CREATE TABLE users (id text PRIMARY KEY, email text UNIQUE NOT NULL, password_hash text NOT NULL, role text NOT NULL)'
-  ).run()
+  await applyD1Migrations(env.DB, env.TEST_MIGRATIONS)
   const hash = await hashPassword('s3cret-pass')
   await env.DB
     .prepare('INSERT INTO users VALUES (?, ?, ?, ?)')
@@ -122,5 +121,55 @@ describe('JWT protected routes', () => {
     const ng = await call(app, '/admin/posts/1', { method: 'DELETE', headers: bearer(editor) })
     expect(ng.status).toBe(403)
     expect(await ng.json()).toEqual({ error: 'Forbidden' })
+  })
+})
+
+describe('POST /auth/register', () => {
+  const register = (body: unknown, ip: string) =>
+    call(app, '/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'CF-Connecting-IP': ip },
+      body: JSON.stringify(body),
+    })
+
+  it('creates a user with role "user" and the user can log in', async () => {
+    const res = await register(
+      { email: 'bob@example.com', password: 'bob-password', role: 'admin' },
+      '10.1.0.1'
+    )
+    expect(res.status).toBe(201)
+    const row = await env.DB
+      .prepare('SELECT role, password_hash FROM users WHERE email = ?')
+      .bind('bob@example.com')
+      .first<{ role: string; password_hash: string }>()
+    // クライアントが role を送っても user になる。ハッシュは平文ではない
+    expect(row?.role).toBe('user')
+    expect(row?.password_hash).toMatch(/^[0-9a-f]{32}:[0-9a-f]{64}$/)
+
+    const loginRes = await login(
+      { email: 'bob@example.com', password: 'bob-password' },
+      '10.1.0.2'
+    )
+    expect(loginRes.status).toBe(200)
+    const { token } = await loginRes.json<{ token: string }>()
+    const payload = await verify(token, env.JWT_SECRET, 'HS256')
+    expect(payload.role).toBe('user')
+  })
+
+  it('returns 409 for a registered email and 400 for a bad body', async () => {
+    expect(
+      (await register({ email: 'alice@example.com', password: 'whatever-pass' }, '10.1.0.3')).status
+    ).toBe(409)
+    expect(
+      (await register({ email: 'x@example.com', password: 'short' }, '10.1.0.3')).status
+    ).toBe(400)
+  })
+})
+
+describe('secure headers', () => {
+  it('are set on routes defined before the CORS and rate limit setup', async () => {
+    const res = await call(app, '/posts')
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff')
+    expect(res.headers.get('Strict-Transport-Security')).toBeTruthy()
   })
 })

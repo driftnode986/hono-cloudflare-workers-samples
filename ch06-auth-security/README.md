@@ -9,7 +9,7 @@ JWT、API キー、CORS、セキュリティヘッダー、レート制限を扱
 ```
 ch06-auth-security/
   src/index.ts                      # エントリポイント (保護ルート・CORS・レート制限の組み込み)
-  src/routes/auth.ts                # ログインと JWT 発行
+  src/routes/auth.ts                # ユーザー登録、ログイン、JWT 発行
   src/lib/password.ts               # パスワードハッシュ (PBKDF2)
   src/lib/users.ts                  # メールアドレスでユーザーを引く (D1)
   src/middleware/auth.ts            # JWT 検証とロール確認
@@ -19,6 +19,8 @@ ch06-auth-security/
   src/middleware/rate-limit.ts      # KV を使ったレート制限
   src/examples/                     # 本文の個別の例 (複数オリジン・CSP など)
   src/steps/                        # 本文の途中の版 (wrangler.toml の断片など)
+  migrations/0000_users.sql         # users テーブル (wrangler d1 migrations apply)
+  .dev.vars.example                 # ローカル用のシークレットの雛形 (.dev.vars にコピー)
   test/                             # vitest のテスト
   wrangler.toml                     # Wrangler 設定
 ```
@@ -32,7 +34,7 @@ npm test         # テスト (vitest + @cloudflare/vitest-pool-workers)
 ```
 
 テストは Workers ランタイム (workerd) の上で、D1 と KV の実物 (ローカル) を使って動きます。
-`API_KEY` などのシークレットは `vitest.config.ts` でテスト用の値を渡しています。
+`JWT_SECRET`・`API_KEY` などのシークレットは `vitest.config.ts` でテスト用の値を渡しています。ローカルで `npm run dev` するときは、`.dev.vars.example` を `.dev.vars` にコピーして使います。
 
 開発サーバー (`npm run dev`) は、`wrangler.toml` の `database_id` と KV の `id` を、
 自分のアカウントで作成した値に置き換えてから起動してください。

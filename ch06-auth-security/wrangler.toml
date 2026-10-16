@@ -6,8 +6,6 @@ compatibility_date = "2025-12-01"
 [vars]
 ENVIRONMENT = "development"
 ALLOWED_ORIGIN = "http://localhost:3000"
-# 開発用。本番では wrangler secret put JWT_SECRET で設定する
-JWT_SECRET = "dev-secret-do-not-use-in-production"
 
 [env.production.vars]
 ENVIRONMENT = "production"

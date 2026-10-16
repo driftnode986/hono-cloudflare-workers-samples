@@ -3,7 +3,7 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
-import { eq, desc, like, sql } from 'drizzle-orm'
+import { eq, desc, like, sql, inArray } from 'drizzle-orm'
 import type { AppEnv } from '../types'
 import { createDb } from '../db'
 import { posts } from '../db/schema'
@@ -181,18 +181,37 @@ import { tags, postTags } from '../db/schema'
 app.post(
   '/:id/tags',
   zValidator('param', z.object({ id: z.string().uuid() })),
-  zValidator('json', z.object({ tagIds: z.array(z.number().int()) })),
+  zValidator('json', z.object({
+    tagIds: z.array(z.number().int()).min(1),
+  })),
   async (c) => {
     const db = createDb(c.env.DB)
     const { id } = c.req.valid('param')
     const { tagIds } = c.req.valid('json')
 
-    const values = tagIds.map((tagId) => ({
-      postId: id,
-      tagId,
-    }))
+    const [post] = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(eq(posts.id, id))
+    if (!post) {
+      return c.json({ error: 'Post not found' }, 404)
+    }
+// #endregion
 
-    await db.insert(postTags).values(values).onConflictDoNothing()
+// #region add-tags-insert
+    // 外部キー違反で 500 にしないよう、先にタグの実在を確かめる
+    const found = await db
+      .select({ id: tags.id })
+      .from(tags)
+      .where(inArray(tags.id, tagIds))
+    if (found.length !== new Set(tagIds).size) {
+      return c.json({ error: 'Unknown tag' }, 400)
+    }
+
+    await db
+      .insert(postTags)
+      .values(tagIds.map((tagId) => ({ postId: id, tagId })))
+      .onConflictDoNothing()
 
     return c.json({ message: 'Tags added' })
   }
@@ -240,14 +259,19 @@ app.post(
     title: z.string().min(1),
     body: z.string().min(1),
     slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
-    tagNames: z.array(z.string()).max(5),
+    tagNames: z.array(z.string().min(1)).max(5),
   })),
   async (c) => {
     const db = createDb(c.env.DB)
     const data = c.req.valid('json')
+    const id = crypto.randomUUID()
+// #endregion
 
-    const result = await db.batch([
+// #region with-tags-batch
+    // 記事・タグ・両者の結びつきを 1 回のバッチ (1 トランザクション) で作る
+    const [created] = await db.batch([
       db.insert(posts).values({
+        id,
         title: data.title,
         body: data.body,
         slug: data.slug,
@@ -256,9 +280,18 @@ app.post(
       ...data.tagNames.map((name) =>
         db.insert(tags).values({ name }).onConflictDoNothing()
       ),
+
+      db.insert(postTags).select(
+        db.select({
+          postId: sql<string>`${id}`.as('post_id'),
+          tagId: tags.id,
+        })
+          .from(tags)
+          .where(inArray(tags.name, data.tagNames))
+      ),
     ])
 
-    return c.json({ post: result[0][0] }, 201)
+    return c.json({ post: created[0] }, 201)
   }
 )
 // #endregion

@@ -65,13 +65,15 @@ describe('R2 files', () => {
     expect(await res.text()).toBe('nested')
   })
 
-  it('/meta/:key returns headers only', async () => {
+  it('/meta/:key returns the size and etag as JSON', async () => {
     await put('meta.txt', '12345')
     const res = await app.request('/meta/meta.txt', {}, env)
     expect(res.status).toBe(200)
-    expect(res.headers.get('content-length')).toBe('5')
-    expect(res.headers.get('etag')).toBeTruthy()
-    expect(await res.text()).toBe('')
+    const body = await res.json<Record<string, unknown>>()
+    expect(body.key).toBe('meta.txt')
+    expect(body.size).toBe(5)
+    expect(body.etag).toMatch(/^"/)
+    expect(body.contentType).toBe('text/plain')
   })
 
   it('/meta/:key returns 404 for a missing key', async () => {

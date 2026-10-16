@@ -1,0 +1,4 @@
+# .dev.vars.example
+# コピーして .dev.vars を作る
+JWT_SECRET="local-dev-secret-change-me"
+API_KEY="local-dev-api-key"

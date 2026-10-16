@@ -11,7 +11,14 @@ const app = new Hono<AppEnv>()
 app.get('/posts', kvCache(600), async (c) => {
   // D1 クエリ (キャッシュ MISS 時のみ実行)
   const db = createDb(c.env.DB)
-  const posts = await db.select().from(postsTable).limit(20)
+  const posts = await db
+    .select({
+      id: postsTable.id,
+      title: postsTable.title,
+      createdAt: postsTable.createdAt,
+    })
+    .from(postsTable)
+    .limit(20)
   return c.json({ posts })
 })
 // #endregion

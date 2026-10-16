@@ -1,5 +1,0 @@
-# wrangler.toml (6.2 の時点。開発用の秘密鍵だけを持つ)
-# #region jwt-secret
-[vars]
-JWT_SECRET = "dev-secret-do-not-use-in-production"
-# #endregion

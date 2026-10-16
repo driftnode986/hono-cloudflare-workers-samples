@@ -38,12 +38,12 @@ app.get('/meta/:key{.+}', async (c) => {
     return c.notFound()
   }
 
-  const headers = new Headers()
-  object.writeHttpMetadata(headers)
-  headers.set('etag', object.httpEtag)
-  headers.set('content-length', String(object.size))
-
-  return new Response(null, { headers })
+  return c.json({
+    key: object.key,
+    size: object.size,
+    etag: object.httpEtag,
+    contentType: object.httpMetadata?.contentType,
+  })
 })
 // #endregion
 

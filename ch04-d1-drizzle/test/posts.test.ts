@@ -221,6 +221,50 @@ describe('タグ（リレーション）', () => {
     expect([...detail.tags].sort()).toEqual(['d1', 'hono'])
   })
 
+  it('同じタグを 2 回付けても行は 1 つ（複合主キー）', async () => {
+    const post = await createPost('dup-tag')
+    const db = createDb(env.DB)
+    const [tag] = await db.insert(tags).values({ name: 'once' }).returning()
+    for (let i = 0; i < 2; i++) {
+      const res = await call(
+        `/api/posts/${post.id}/tags`,
+        send('POST', { tagIds: [tag.id] })
+      )
+      expect(res.status).toBe(200)
+    }
+    expect(await db.select().from(postTags)).toHaveLength(1)
+    const detail = (await (await call(`/api/posts/${post.id}/detail`)).json()) as Json
+    expect(detail.tags).toEqual(['once'])
+  })
+
+  it('tagIds が空配列なら 400', async () => {
+    const post = await createPost('empty-ids')
+    const res = await call(
+      `/api/posts/${post.id}/tags`,
+      send('POST', { tagIds: [] })
+    )
+    expect(res.status).toBe(400)
+  })
+
+  it('存在しないタグ ID は 400（外部キー違反の 500 にしない）', async () => {
+    const post = await createPost('bad-tag')
+    const res = await call(
+      `/api/posts/${post.id}/tags`,
+      send('POST', { tagIds: [9999] })
+    )
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({ error: 'Unknown tag' })
+    expect(await createDb(env.DB).select().from(postTags)).toHaveLength(0)
+  })
+
+  it('存在しない記事へのタグ付けは 404', async () => {
+    const res = await call(
+      `/api/posts/${crypto.randomUUID()}/tags`,
+      send('POST', { tagIds: [1] })
+    )
+    expect(res.status).toBe(404)
+  })
+
   it('タグが無い記事は tags: []', async () => {
     const post = await createPost('plain')
     const detail = (await (await call(`/api/posts/${post.id}/detail`)).json()) as Json
@@ -252,6 +296,36 @@ describe('POST /api/posts/with-tags（batch）', () => {
     expect(await db.select().from(posts)).toHaveLength(1)
     const names = (await db.select().from(tags)).map((t) => t.name).sort()
     expect(names).toEqual(['alpha', 'beta'])
+  })
+
+  it('作ったタグを記事に結びつけ、既存のタグは再利用する', async () => {
+    const db = createDb(env.DB)
+    await db.insert(tags).values({ name: 'alpha' })
+    const res = await call(
+      '/api/posts/with-tags',
+      send('POST', {
+        title: 'Linked',
+        body: 'Body',
+        slug: 'linked',
+        tagNames: ['alpha', 'beta'],
+      })
+    )
+    expect(res.status).toBe(201)
+    const post = ((await res.json()) as Json).post
+    expect(await db.select().from(tags)).toHaveLength(2)
+    const detail = (await (await call(`/api/posts/${post.id}/detail`)).json()) as Json
+    expect([...detail.tags].sort()).toEqual(['alpha', 'beta'])
+  })
+
+  it('tagNames が空でも記事だけ作れる', async () => {
+    const res = await call(
+      '/api/posts/with-tags',
+      send('POST', { title: 'No tags', body: 'Body', slug: 'no-tags', tagNames: [] })
+    )
+    expect(res.status).toBe(201)
+    const post = ((await res.json()) as Json).post
+    const detail = (await (await call(`/api/posts/${post.id}/detail`)).json()) as Json
+    expect(detail.tags).toEqual([])
   })
 
   it('slug が重複するとバッチ全体が失敗しタグも残らない', async () => {

@@ -6,6 +6,7 @@ import {
   integer,
   index,
   uniqueIndex,
+  primaryKey,
 } from 'drizzle-orm/sqlite-core'
 
 export const posts = sqliteTable('posts', {
@@ -35,5 +36,7 @@ export const tags = sqliteTable('tags', {
 export const postTags = sqliteTable('post_tags', {
   postId: text('post_id').notNull().references(() => posts.id),
   tagId: integer('tag_id').notNull().references(() => tags.id),
-})
+}, (table) => [
+  primaryKey({ columns: [table.postId, table.tagId] }),
+])
 // #endregion
