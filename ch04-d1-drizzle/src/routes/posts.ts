@@ -1,3 +1,4 @@
+// #region list-setup
 // src/routes/posts.ts
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
@@ -8,7 +9,9 @@ import { createDb } from '../db'
 import { posts } from '../db/schema'
 
 const app = new Hono<AppEnv>()
+// #endregion
 
+// #region list-route
 // 一覧取得 (ページネーション付き)
 app.get(
   '/',
@@ -25,7 +28,9 @@ app.get(
     const conditions = search
       ? like(posts.title, `%${search}%`)
       : undefined
+// #endregion
 
+// #region list-query
     const items = await db
       .select()
       .from(posts)
@@ -52,8 +57,9 @@ app.get(
     })
   }
 )
+// #endregion
 
-export default app
+// #region get-one
 // src/routes/posts.ts
 app.get(
   '/:id',
@@ -75,6 +81,9 @@ app.get(
     return c.json({ post: results[0] })
   }
 )
+// #endregion
+
+// #region create
 // src/routes/posts.ts
 const createPostSchema = z.object({
   title: z.string().min(1).max(100),
@@ -101,6 +110,9 @@ app.post(
     return c.json({ post: results[0] }, 201)
   }
 )
+// #endregion
+
+// #region update-schema
 // src/routes/posts.ts
 const updatePostSchema = z.object({
   title: z.string().min(1).max(100).optional(),
@@ -108,7 +120,9 @@ const updatePostSchema = z.object({
   slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/).optional(),
   publishedAt: z.string().datetime().nullable().optional(),
 })
+// #endregion
 
+// #region update-route
 app.put(
   '/:id',
   zValidator('param', z.object({ id: z.string().uuid() })),
@@ -134,6 +148,9 @@ app.put(
     return c.json({ post: results[0] })
   }
 )
+// #endregion
+
+// #region delete
 // src/routes/posts.ts
 app.delete(
   '/:id',
@@ -154,8 +171,11 @@ app.delete(
     return c.json({ message: 'Deleted' })
   }
 )
+// #endregion
+
+// #region add-tags
 // src/routes/posts.ts
-import { posts, tags, postTags } from '../db/schema'
+import { tags, postTags } from '../db/schema'
 
 // 記事にタグを付与
 app.post(
@@ -177,6 +197,9 @@ app.post(
     return c.json({ message: 'Tags added' })
   }
 )
+// #endregion
+
+// #region detail
 // src/routes/posts.ts
 app.get(
   '/:id/detail',
@@ -207,6 +230,9 @@ app.get(
     return c.json({ ...post, tags: tagNames })
   }
 )
+// #endregion
+
+// #region with-tags
 // src/routes/posts.ts
 app.post(
   '/with-tags',
@@ -235,3 +261,6 @@ app.post(
     return c.json({ post: result[0][0] }, 201)
   }
 )
+// #endregion
+
+export default app
