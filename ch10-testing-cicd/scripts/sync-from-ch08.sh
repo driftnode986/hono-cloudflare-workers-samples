@@ -12,9 +12,6 @@ cp -R "$SRC/src/." src/
 rm -rf src/steps
 cp -R "$SRC/migrations" migrations
 
-# テストは app.request() で呼ぶので、app を名前付きでも export する。
-# 第 8 章の export default { fetch, queue } はそのまま残す。
-sed -i.bak 's/^const app = new Hono/export const app = new Hono/' src/index.ts
-rm -f src/index.ts.bak
+# 第 8 章の index.ts は app を名前付きでも export している（テストが app.request() で呼ぶため）。写しは完全に同じにする
 grep -q '^export const app = ' src/index.ts \
-  || { echo "src/index.ts に 'const app = new Hono' が見つかりません" >&2; exit 1; }
+  || { echo "第 8 章の src/index.ts が export const app ではありません" >&2; exit 1; }

@@ -8,7 +8,7 @@ import resourcesApp from './routes/resources'
 import queueHandler from './queue'
 import type { Bindings, Variables } from './types'
 
-const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
+export const app = new Hono<{ Bindings: Bindings; Variables: Variables }>()
 
 app.use('*', cors())
 
