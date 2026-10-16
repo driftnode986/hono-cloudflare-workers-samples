@@ -8,7 +8,10 @@ export default defineConfig(async () => {
     plugins: [
       cloudflareTest({
         wrangler: { configPath: './wrangler.toml' },
-        miniflare: { bindings: { TEST_MIGRATIONS: migrations } },
+        // シークレットは wrangler.toml に書かない。テスト用の値だけここで渡す
+        miniflare: {
+          bindings: { TEST_MIGRATIONS: migrations, JWT_SECRET: 'test-jwt-secret' },
+        },
       }),
     ],
   }

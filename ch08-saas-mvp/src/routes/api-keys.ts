@@ -1,7 +1,6 @@
 // #region key-helpers
 // src/routes/api-keys.ts
 import { Hono } from 'hono'
-import { eq, and } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import * as schema from '../db/schema'
 import type { Bindings, Variables } from '../types'

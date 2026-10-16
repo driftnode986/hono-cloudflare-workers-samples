@@ -3,9 +3,6 @@ name = "blog-api"
 main = "src/index.ts"
 compatibility_date = "2025-12-01"
 
-[vars]
-JWT_SECRET = "your-secret-key-change-in-production"
-
 [[d1_databases]]
 binding = "DB"
 database_name = "blog-db"

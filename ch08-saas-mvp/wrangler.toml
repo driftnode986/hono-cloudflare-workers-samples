@@ -3,9 +3,6 @@ name = "saas-api"
 main = "src/index.ts"
 compatibility_date = "2026-01-01"
 
-[vars]
-JWT_SECRET = "your-secret-key-change-in-production"
-
 [[d1_databases]]
 binding = "DB"
 database_name = "saas-db"
