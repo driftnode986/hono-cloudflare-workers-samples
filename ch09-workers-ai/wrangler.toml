@@ -1,7 +1,27 @@
+# #region basic
 # wrangler.toml
+name = "my-ai-app"
+main = "src/index.ts"
+compatibility_date = "2025-12-01"
+
 [ai]
 binding = "AI"
+# #endregion
 
+# #region r2
+[[r2_buckets]]
+binding = "IMAGES_BUCKET"
+bucket_name = "ai-images"
+# #endregion
+
+# #region vectorize
+[[vectorize]]
+binding = "VECTOR_INDEX"
+index_name = "my-index"
+# #endregion
+
+# #region kv
 [[kv_namespaces]]
 binding = "AI_CACHE"
 id = "<your-kv-namespace-id>"
+# #endregion

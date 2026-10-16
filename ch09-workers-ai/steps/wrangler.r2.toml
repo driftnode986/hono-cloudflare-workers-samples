@@ -1,0 +1,7 @@
+# wrangler.toml
+[ai]
+binding = "AI"
+
+[[r2_buckets]]
+binding = "IMAGES_BUCKET"
+bucket_name = "ai-images"

@@ -1,0 +1,7 @@
+# wrangler.toml
+[ai]
+binding = "AI"
+
+[[kv_namespaces]]
+binding = "AI_CACHE"
+id = "<your-kv-namespace-id>"

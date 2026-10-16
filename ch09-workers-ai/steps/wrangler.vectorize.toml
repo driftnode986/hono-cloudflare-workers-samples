@@ -1,0 +1,7 @@
+# wrangler.toml
+[ai]
+binding = "AI"
+
+[[vectorize]]
+binding = "VECTOR_INDEX"
+index_name = "my-index"
