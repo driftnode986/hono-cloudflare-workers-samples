@@ -1,3 +1,4 @@
+// #region list-route
 // src/openapi-routes/posts.ts
 import { createRoute } from '@hono/zod-openapi'
 import { PostIdParam, PostSchema, CreatePostBody } from '../schemas/post'
@@ -17,7 +18,9 @@ export const listPostsRoute = createRoute({
     },
   },
 })
+// #endregion
 
+// #region create-route
 export const createPostRoute = createRoute({
   method: 'post',
   path: '/api/posts',
@@ -37,7 +40,9 @@ export const createPostRoute = createRoute({
     },
   },
 })
+// #endregion
 
+// #region get-route
 export const getPostRoute = createRoute({
   method: 'get',
   path: '/api/posts/{id}',
@@ -59,3 +64,4 @@ export const getPostRoute = createRoute({
     },
   },
 })
+// #endregion

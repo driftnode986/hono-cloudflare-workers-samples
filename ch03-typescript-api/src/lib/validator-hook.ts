@@ -3,7 +3,9 @@ import { z } from 'zod'
 import type { Context } from 'hono'
 
 export const validationErrorHook = (
-  result: { success: boolean; data?: unknown; error?: z.ZodError },
+  result:
+    | { success: true; data: unknown }
+    | { success: false; error: z.core.$ZodError },
   c: Context
 ) => {
   if (!result.success) {

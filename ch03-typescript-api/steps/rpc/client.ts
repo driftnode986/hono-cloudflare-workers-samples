@@ -1,3 +1,4 @@
+// #region client-basic
 // client.ts
 import { hc } from 'hono/client'
 import type { AppType } from './src/index'
@@ -24,6 +25,9 @@ async function main() {
   const post = await getRes.json()
   // post: { id: string; title: string; body: string }
 }
+// #endregion
+
+// #region client-infer
 // client.ts
 import type { InferRequestType, InferResponseType } from 'hono/client'
 
@@ -32,13 +36,8 @@ type CreatePostRequest = InferRequestType<typeof client.api.posts.$post>['json']
 
 type CreatePostResponse = InferResponseType<typeof client.api.posts.$post>
 // { id: string; title: string; body: string }
-// client.ts (クライアント側)
-const res = await client.api.posts[':id'].$get({ param: { id: '999' } })
+// #endregion
 
-if (res.status === 404) {
-  const data = await res.json()
-  // data: { error: string }
-} else {
-  const data = await res.json()
-  // data: { post: { id: string; title: string; body: string } }
-}
+// 型検査のためだけに使う（呼び出しはテスト側で行う）
+export { main }
+export type { CreatePostRequest, CreatePostResponse }

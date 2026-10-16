@@ -1,6 +1,11 @@
+// #region openapi-app
 // src/index.ts
 import { OpenAPIHono } from '@hono/zod-openapi'
-import { listPostsRoute, createPostRoute, getPostRoute } from './openapi-routes/posts'
+import {
+  listPostsRoute,
+  createPostRoute,
+  getPostRoute,
+} from './openapi-routes/posts'
 
 const app = new OpenAPIHono()
 
@@ -16,7 +21,9 @@ app.openapi(listPostsRoute, (c) => {
     ],
   })
 })
+// #endregion
 
+// #region openapi-create
 app.openapi(createPostRoute, (c) => {
   const data = c.req.valid('json')
   return c.json({
@@ -25,7 +32,9 @@ app.openapi(createPostRoute, (c) => {
     createdAt: new Date().toISOString(),
   }, 201)
 })
+// #endregion
 
+// #region openapi-get
 app.openapi(getPostRoute, (c) => {
   const { id } = c.req.valid('param')
   return c.json({
@@ -33,9 +42,11 @@ app.openapi(getPostRoute, (c) => {
     title: 'Hello',
     body: 'World',
     createdAt: '2026-05-01T00:00:00Z',
-  })
+  }, 200)
 })
+// #endregion
 
+// #region openapi-doc
 app.doc('/doc', {
   openapi: '3.0.0',
   info: {
@@ -46,3 +57,4 @@ app.doc('/doc', {
 })
 
 export default app
+// #endregion
