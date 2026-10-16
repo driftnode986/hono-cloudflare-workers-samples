@@ -1,12 +1,14 @@
+// #region upload-lookup
 // src/routes/images.ts
 import { Hono } from 'hono'
 import { eq, and } from 'drizzle-orm'
 import { createDb } from '../db'
 import { posts } from '../db/schema'
 import { authMiddleware } from '../middleware/auth'
+import type { JwtVariables } from 'hono/jwt'
 import type { Bindings } from '../types'
 
-const images = new Hono<{ Bindings: Bindings }>()
+const images = new Hono<{ Bindings: Bindings; Variables: JwtVariables }>()
 
 images.post('/:slug/image', authMiddleware, async (c) => {
   const slug = c.req.param('slug')
@@ -20,23 +22,32 @@ images.post('/:slug/image', authMiddleware, async (c) => {
   if (!post) {
     return c.json({ error: 'Post not found or not authorized' }, 404)
   }
+// #endregion
 
+// #region upload-validate
   const formData = await c.req.formData()
-  const file = formData.get('image')
-  if (!file || !(file instanceof File)) {
+  // workers-types は get() を string 型とするが、
+  // 実行時は File が返る
+  const file = formData.get('image') as string | File | null
+  if (!file || typeof file === 'string') {
     return c.json({ error: 'No image file provided' }, 400)
   }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
   if (!allowedTypes.includes(file.type)) {
-    return c.json({ error: 'Unsupported image format. Use JPEG, PNG, or WebP' }, 400)
+    return c.json(
+      { error: 'Unsupported image format. Use JPEG, PNG, or WebP' },
+      400
+    )
   }
 
   const maxSize = 5 * 1024 * 1024
   if (file.size > maxSize) {
     return c.json({ error: 'Image size exceeds 5 MB limit' }, 400)
   }
+// #endregion
 
+// #region upload-store
   if (post.coverImageKey) {
     await c.env.IMAGES_BUCKET.delete(post.coverImageKey)
   }
@@ -55,6 +66,8 @@ images.post('/:slug/image', authMiddleware, async (c) => {
 
   return c.json({ key, message: 'Image uploaded' }, 201)
 })
+// #endregion
+// #region serve
 images.get('/file/*', async (c) => {
   const key = c.req.path.replace('/api/images/file/', '')
   const object = await c.env.IMAGES_BUCKET.get(key)
@@ -72,3 +85,4 @@ images.get('/file/*', async (c) => {
 })
 
 export { images }
+// #endregion

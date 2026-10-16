@@ -1,3 +1,4 @@
+// #region posts-setup
 // src/routes/posts.ts
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
@@ -6,15 +7,20 @@ import { eq, desc, and, count } from 'drizzle-orm'
 import { createDb } from '../db'
 import { posts, users } from '../db/schema'
 import { authMiddleware } from '../middleware/auth'
+import type { JwtVariables } from 'hono/jwt'
 import type { Bindings } from '../types'
 
-const postsRouter = new Hono<{ Bindings: Bindings }>()
+const postsRouter = new Hono<{ Bindings: Bindings; Variables: JwtVariables }>()
+// #endregion
 
+// #region list-schema
 const listQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(10)
 })
+// #endregion
 
+// #region list-query
 postsRouter.get('/', zValidator('query', listQuerySchema), async (c) => {
   const { page, limit } = c.req.valid('query')
   const db = createDb(c.env.DB)
@@ -41,7 +47,9 @@ postsRouter.get('/', zValidator('query', listQuerySchema), async (c) => {
       .from(posts)
       .where(eq(posts.status, 'published'))
   ])
+// #endregion
 
+// #region list-response
   const total = totalResult[0].total
 
   return c.json({
@@ -54,6 +62,8 @@ postsRouter.get('/', zValidator('query', listQuerySchema), async (c) => {
     }
   })
 })
+// #endregion
+// #region create-schema
 const createPostSchema = z.object({
   title: z.string().min(1).max(200),
   content: z.string().min(1),
@@ -64,7 +74,9 @@ const createPostSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'slug は英小文字・数字・ハイフンのみ'),
   status: z.enum(['draft', 'published']).default('draft')
 })
+// #endregion
 
+// #region create-route
 postsRouter.post(
   '/',
   authMiddleware,
@@ -90,13 +102,17 @@ postsRouter.post(
     return c.json(result[0], 201)
   }
 )
+// #endregion
+// #region update-schema
 const updatePostSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   content: z.string().min(1).optional(),
   excerpt: z.string().max(300).optional(),
   status: z.enum(['draft', 'published']).optional()
 })
+// #endregion
 
+// #region update-route
 postsRouter.put(
   '/:slug',
   authMiddleware,
@@ -126,6 +142,8 @@ postsRouter.put(
     return c.json(result[0])
   }
 )
+// #endregion
+// #region delete-route
 postsRouter.delete('/:slug', authMiddleware, async (c) => {
   const slug = c.req.param('slug')
   const payload = c.get('jwtPayload')
@@ -149,9 +167,13 @@ postsRouter.delete('/:slug', authMiddleware, async (c) => {
 })
 
 export { postsRouter }
+// #endregion
+// #region html-import
 // src/routes/posts.ts の /:slug エンドポイントを拡張
 import { markdownToHtml } from '../lib/markdown'
+// #endregion
 
+// #region get-slug-query
 postsRouter.get('/:slug', async (c) => {
   const slug = c.req.param('slug')
   const format = c.req.query('format')
@@ -173,7 +195,9 @@ postsRouter.get('/:slug', async (c) => {
     .innerJoin(users, eq(posts.authorId, users.id))
     .where(eq(posts.slug, slug))
     .limit(1)
+// #endregion
 
+// #region get-slug-response
   if (post.length === 0) {
     return c.json({ error: 'Post not found' }, 404)
   }
@@ -189,3 +213,4 @@ postsRouter.get('/:slug', async (c) => {
 
   return c.json(result)
 })
+// #endregion

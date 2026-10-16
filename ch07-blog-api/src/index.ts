@@ -1,7 +1,9 @@
+// #region index-setup
 // src/index.ts
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
+import { HTTPException } from 'hono/http-exception'
 import { auth } from './routes/auth'
 import { postsRouter } from './routes/posts'
 import { images } from './routes/images'
@@ -15,7 +17,9 @@ app.use('/api/*', cors({
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowHeaders: ['Content-Type', 'Authorization']
 }))
+// #endregion
 
+// #region index-routes
 app.get('/', (c) => c.json({ message: 'Blog API is running' }))
 
 app.route('/api/auth', auth)
@@ -23,6 +27,9 @@ app.route('/api/posts', postsRouter)
 app.route('/api/images', images)
 
 app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    return err.getResponse()
+  }
   console.error(`Error: ${err.message}`)
   return c.json(
     { error: 'Internal Server Error', message: err.message },
@@ -35,3 +42,4 @@ app.notFound((c) => {
 })
 
 export default app
+// #endregion

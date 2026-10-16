@@ -1,3 +1,4 @@
+// #region users-table
 // src/db/schema.ts
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 
@@ -10,7 +11,9 @@ export const users = sqliteTable('users', {
     .notNull()
     .$defaultFn(() => new Date().toISOString())
 })
+// #endregion
 
+// #region posts-table
 export const posts = sqliteTable('posts', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   slug: text('slug').notNull().unique(),
@@ -31,3 +34,4 @@ export const posts = sqliteTable('posts', {
     .notNull()
     .$defaultFn(() => new Date().toISOString())
 })
+// #endregion

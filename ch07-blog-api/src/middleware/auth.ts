@@ -6,6 +6,6 @@ import type { Bindings } from '../types'
 export const authMiddleware = createMiddleware<{
   Bindings: Bindings
 }>(async (c, next) => {
-  const jwtMiddleware = jwt({ secret: c.env.JWT_SECRET })
-  return jwtMiddleware(c, next)
+  const jwtMiddleware = jwt({ secret: c.env.JWT_SECRET, alg: 'HS256' })
+  await jwtMiddleware(c, next)
 })
