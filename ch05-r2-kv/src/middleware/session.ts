@@ -1,7 +1,8 @@
 // src/middleware/session.ts
+// #region session-types
 import { createMiddleware } from 'hono/factory'
 
-type SessionData = {
+export type SessionData = {
   userId: string
   role: string
   createdAt: string
@@ -16,7 +17,9 @@ type Env = {
     sessionId: string | null
   }
 }
+// #endregion
 
+// #region session-middleware
 export const sessionMiddleware = createMiddleware<Env>(async (c, next) => {
   const sessionId = c.req.header('X-Session-Id')
 
@@ -34,7 +37,9 @@ export const sessionMiddleware = createMiddleware<Env>(async (c, next) => {
 
   await next()
 })
+// #endregion
 
+// #region session-helpers
 export const createSession = async (
   kv: KVNamespace,
   data: SessionData
@@ -52,3 +57,4 @@ export const destroySession = async (
 ): Promise<void> => {
   await kv.delete(`session:${sessionId}`)
 }
+// #endregion

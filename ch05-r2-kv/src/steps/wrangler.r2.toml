@@ -1,0 +1,10 @@
+# wrangler.toml (5.2 の時点。R2 のバインディングだけを持つ)
+# #region r2
+name = "my-hono-app"
+main = "src/index.ts"
+compatibility_date = "2025-12-01"
+
+[[r2_buckets]]
+binding = "FILES_BUCKET"
+bucket_name = "my-files"
+# #endregion

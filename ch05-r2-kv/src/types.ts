@@ -1,4 +1,6 @@
 // src/types.ts
+import type { SessionData } from './middleware/session'
+
 type Bindings = {
   DB: D1Database
   FILES_BUCKET: R2Bucket

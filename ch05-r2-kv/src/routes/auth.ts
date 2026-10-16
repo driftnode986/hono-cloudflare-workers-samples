@@ -1,4 +1,15 @@
 // src/routes/auth.ts
+// #region login-logout
+import { Hono } from 'hono'
+import type { AppEnv } from '../types'
+import {
+  createSession,
+  destroySession,
+  sessionMiddleware,
+} from '../middleware/session'
+
+const app = new Hono<AppEnv>()
+
 app.post('/login', async (c) => {
   // 認証処理 (省略)
   const user = { userId: 'user-1', role: 'admin' }
@@ -18,3 +29,6 @@ app.post('/logout', sessionMiddleware, async (c) => {
   }
   return c.body(null, 204)
 })
+// #endregion
+
+export default app

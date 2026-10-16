@@ -1,0 +1,7 @@
+# wrangler.toml (5.6 の時点。プレビュー用のネームスペースを加えた版)
+# #region kv-preview
+[[kv_namespaces]]
+binding = "MY_KV"
+id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+preview_id = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+# #endregion

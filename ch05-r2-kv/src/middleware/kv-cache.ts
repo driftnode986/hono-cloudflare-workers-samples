@@ -1,4 +1,5 @@
 // src/middleware/kv-cache.ts
+// #region kv-cache-setup
 import { createMiddleware } from 'hono/factory'
 
 type Env = {
@@ -6,7 +7,9 @@ type Env = {
     CACHE_KV: KVNamespace
   }
 }
+// #endregion
 
+// #region kv-cache
 export const kvCache = (ttl: number = 300) =>
   createMiddleware<Env>(async (c, next) => {
     const cacheKey = `cache:${c.req.url}`
@@ -31,3 +34,4 @@ export const kvCache = (ttl: number = 300) =>
       c.res.headers.set('X-Cache', 'MISS')
     }
   })
+// #endregion

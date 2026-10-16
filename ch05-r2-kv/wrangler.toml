@@ -1,4 +1,5 @@
 # wrangler.toml
+# #region bindings
 name = "my-hono-app"
 main = "src/index.ts"
 compatibility_date = "2025-12-01"
@@ -22,3 +23,9 @@ id = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 [[kv_namespaces]]
 binding = "SESSION_KV"
 id = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+# #endregion
+
+# 5.6 節の MY_KV (設定値の読み書きとKV操作の例で使う)
+[[kv_namespaces]]
+binding = "MY_KV"
+id = "cccccccccccccccccccccccccccccccc"

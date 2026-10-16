@@ -1,4 +1,5 @@
 // src/routes/files.ts
+// #region put
 import { Hono } from 'hono'
 
 type Bindings = {
@@ -7,7 +8,7 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>()
 
-app.put('/files/:key', async (c) => {
+app.put('/files/:key{.+}', async (c) => {
   const key = c.req.param('key')
   const body = await c.req.arrayBuffer()
   const contentType = c.req.header('Content-Type') || 'application/octet-stream'
@@ -26,8 +27,10 @@ app.put('/files/:key', async (c) => {
 })
 
 export default app
-// src/routes/files.ts
-app.head('/files/:key', async (c) => {
+// #endregion
+
+// #region head
+app.get('/meta/:key{.+}', async (c) => {
   const key = c.req.param('key')
   const object = await c.env.FILES_BUCKET.head(key)
 
@@ -42,13 +45,17 @@ app.head('/files/:key', async (c) => {
 
   return new Response(null, { headers })
 })
-// src/routes/files.ts
-app.delete('/files/:key', async (c) => {
+// #endregion
+
+// #region delete
+app.delete('/files/:key{.+}', async (c) => {
   const key = c.req.param('key')
   await c.env.FILES_BUCKET.delete(key)
   return c.body(null, 204)
 })
-// src/routes/files.ts
+// #endregion
+
+// #region list
 app.get('/files', async (c) => {
   const prefix = c.req.query('prefix') || ''
   const cursor = c.req.query('cursor')
@@ -70,10 +77,13 @@ app.get('/files', async (c) => {
     cursor: listed.truncated ? listed.cursor : undefined,
   })
 })
-// src/routes/files.ts
-app.get('/files/:key', async (c) => {
+// #endregion
+
+// #region get-conditional
+app.get('/files/:key{.+}', async (c) => {
   const key = c.req.param('key')
-  const ifNoneMatch = c.req.header('If-None-Match')
+  // ブラウザは If-None-Match を "etag" と引用符つきで送る。R2 には外して渡す
+  const ifNoneMatch = c.req.header('If-None-Match')?.replaceAll('"', '')
 
   const object = await c.env.FILES_BUCKET.get(key, {
     onlyIf: {
@@ -85,7 +95,7 @@ app.get('/files/:key', async (c) => {
     return c.json({ error: 'File not found' }, 404)
   }
 
-  if (object instanceof R2ObjectBody === false) {
+  if (!('body' in object)) {
     return new Response(null, { status: 304 })
   }
 
@@ -96,3 +106,4 @@ app.get('/files/:key', async (c) => {
 
   return new Response(object.body, { headers })
 })
+// #endregion
