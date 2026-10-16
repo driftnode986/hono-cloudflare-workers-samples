@@ -1,3 +1,4 @@
+# #region env-staging
 # wrangler.toml
 name = "saas-api"
 main = "src/index.ts"
@@ -18,7 +19,9 @@ database_id = "<staging-database-id>"
 [[env.staging.kv_namespaces]]
 binding = "PLAN_KV"
 id = "<staging-kv-id>"
+# #endregion
 
+# #region env-production
 [env.production]
 [env.production.vars]
 ENVIRONMENT = "production"
@@ -31,8 +34,39 @@ database_id = "<production-database-id>"
 [[env.production.kv_namespaces]]
 binding = "PLAN_KV"
 id = "<production-kv-id>"
+# #endregion
+
+# 以下は本文の wrangler.toml に追記して使う設定。
+# 既定の環境（テストとローカル開発）のバインディング。環境ごとに継承されないため、
+# 上の staging / production にも別途定義が要る。第 8 章のアプリが使うので Queue も定義する。
+[[d1_databases]]
+binding = "DB"
+database_name = "saas-db"
+database_id = "<your-database-id>"
+
+[[kv_namespaces]]
+binding = "PLAN_KV"
+id = "<your-kv-namespace-id>"
+
+[[queues.producers]]
+queue = "saas-jobs"
+binding = "JOB_QUEUE"
+
+[[env.staging.queues.producers]]
+queue = "saas-jobs-staging"
+binding = "JOB_QUEUE"
+
+[[env.production.queues.producers]]
+queue = "saas-jobs-production"
+binding = "JOB_QUEUE"
+
+# #region observability
 [observability]
 enabled = true
+# #endregion
+
+# #region custom-domain
 [[routes]]
 pattern = "api.example.com"
 custom_domain = true
+# #endregion
