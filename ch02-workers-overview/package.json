@@ -5,14 +5,18 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "hono": "^4.12.23"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260702.0",
+    "@types/node": "^22.20.5",
     "typescript": "^5.9.0",
+    "vitest": "^4.1.0",
     "wrangler": "4.105.0"
-  }
+  },
+  "type": "module"
 }

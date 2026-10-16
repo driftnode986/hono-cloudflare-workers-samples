@@ -1,0 +1,5 @@
+# wrangler.toml
+[[d1_databases]]
+binding = "DB"
+database_name = "my-database"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

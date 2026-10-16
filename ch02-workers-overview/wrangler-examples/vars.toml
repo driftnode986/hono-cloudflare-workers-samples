@@ -1,0 +1,10 @@
+# wrangler.toml
+[vars]
+API_HOST = "api.example.com"
+APP_NAME = "my-app"
+
+[env.staging.vars]
+API_HOST = "staging.example.com"
+
+[env.production.vars]
+API_HOST = "production.example.com"
