@@ -13,7 +13,9 @@ export default {
   ): Promise<void> {
     for (const message of batch.messages) {
       const { type, tenantId, resourceId } = message.body
-      console.log(`[audit] tenant=${tenantId} action=${type} resource=${resourceId}`)
+      console.log(
+        `[audit] tenant=${tenantId} action=${type} resource=${resourceId}`
+      )
       message.ack()
     }
   },

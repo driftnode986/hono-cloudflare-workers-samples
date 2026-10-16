@@ -1,13 +1,19 @@
+// #region plan-limits
 // src/middleware/quota.ts
 import { createMiddleware } from 'hono/factory'
 import type { Bindings, Variables } from '../types'
 
-const PLAN_LIMITS: Record<string, { dailyRequests: number; maxKeys: number }> = {
+const PLAN_LIMITS: Record<
+  string,
+  { dailyRequests: number; maxKeys: number }
+> = {
   free: { dailyRequests: 100, maxKeys: 1 },
   pro: { dailyRequests: 10_000, maxKeys: 5 },
   enterprise: { dailyRequests: 100_000, maxKeys: 50 },
 }
+// #endregion
 
+// #region quota-check
 export const quotaCheck = createMiddleware<{
   Bindings: Bindings
   Variables: Variables
@@ -35,3 +41,4 @@ export const quotaCheck = createMiddleware<{
 
   await next()
 })
+// #endregion

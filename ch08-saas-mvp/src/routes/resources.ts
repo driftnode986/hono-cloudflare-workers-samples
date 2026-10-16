@@ -1,3 +1,4 @@
+// #region resources-head
 // src/routes/resources.ts
 import { Hono } from 'hono'
 import { eq, and, desc } from 'drizzle-orm'
@@ -9,7 +10,9 @@ const resourcesApp = new Hono<{
   Bindings: Bindings
   Variables: Variables
 }>()
+// #endregion
 
+// #region list
 resourcesApp.get('/', async (c) => {
   const tenantId = c.get('tenantId')
   const db = drizzle(c.env.DB, { schema })
@@ -23,7 +26,9 @@ resourcesApp.get('/', async (c) => {
 
   return c.json({ resources: items })
 })
+// #endregion
 
+// #region create
 resourcesApp.post('/', async (c) => {
   const tenantId = c.get('tenantId')
   const { title, content } = await c.req.json<{
@@ -40,9 +45,20 @@ resourcesApp.post('/', async (c) => {
     content: content ?? null,
   })
 
+  // #region enqueue
+  await c.env.JOB_QUEUE.send({
+    type: 'resource.created',
+    tenantId,
+    resourceId: id,
+    timestamp: new Date().toISOString(),
+  })
+  // #endregion
+
   return c.json({ id, title }, 201)
 })
+// #endregion
 
+// #region delete
 resourcesApp.delete('/:id', async (c) => {
   const tenantId = c.get('tenantId')
   const resourceId = c.req.param('id')
@@ -65,3 +81,4 @@ resourcesApp.delete('/:id', async (c) => {
 })
 
 export default resourcesApp
+// #endregion

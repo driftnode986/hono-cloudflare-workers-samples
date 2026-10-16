@@ -1,3 +1,4 @@
+// #region tenant-lookup
 // src/middleware/tenant.ts
 import { createMiddleware } from 'hono/factory'
 import { drizzle } from 'drizzle-orm/d1'
@@ -28,7 +29,9 @@ export const tenantAuth = createMiddleware<{
   if (!found) {
     return c.json({ error: 'Invalid API key' }, 401)
   }
+  // #endregion
 
+  // #region tenant-set
   await db
     .update(schema.apiKeys)
     .set({ lastUsedAt: new Date().toISOString() })
@@ -45,3 +48,4 @@ export const tenantAuth = createMiddleware<{
   c.set('tenantPlan', tenant?.plan ?? 'free')
   await next()
 })
+// #endregion
