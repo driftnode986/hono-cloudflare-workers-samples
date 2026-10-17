@@ -21,6 +21,6 @@ app.get('/posts', kvCache(600), async (c) => {
     .limit(20)
   return c.json({ posts })
 })
-// #endregion
 
 export default app
+// #endregion

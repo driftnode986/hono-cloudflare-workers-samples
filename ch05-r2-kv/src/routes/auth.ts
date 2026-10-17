@@ -1,5 +1,5 @@
 // src/routes/auth.ts
-// #region login-logout
+// #region login
 import { Hono } from 'hono'
 import type { AppEnv } from '../types'
 import {
@@ -21,7 +21,9 @@ app.post('/login', async (c) => {
 
   return c.json({ sessionId })
 })
+// #endregion
 
+// #region logout
 app.post('/logout', sessionMiddleware, async (c) => {
   const sessionId = c.get('sessionId')
   if (sessionId) {
@@ -29,6 +31,6 @@ app.post('/logout', sessionMiddleware, async (c) => {
   }
   return c.body(null, 204)
 })
-// #endregion
 
 export default app
+// #endregion

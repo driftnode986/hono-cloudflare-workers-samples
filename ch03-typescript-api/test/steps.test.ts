@@ -205,6 +205,15 @@ describe('3.5 ステータスコード別の型分岐', () => {
     }
   })
 
+  it('置き換えた後も一覧と作成のルートが残る（3.5 のクライアントがそのまま動く）', async () => {
+    const list = await client.api.posts.$get()
+    expect(list.status).toBe(200)
+    const created = await client.api.posts.$post({
+      json: { title: 'New Post', body: 'Content' },
+    })
+    expect(created.status).toBe(201)
+  })
+
   it('client.ts の分岐コードは localhost:8787 に向けて fetch を呼ぶ', async () => {
     const calls: string[] = []
     const original = globalThis.fetch

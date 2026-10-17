@@ -2,13 +2,14 @@
 # #region bindings
 name = "my-hono-app"
 main = "src/index.ts"
-compatibility_date = "2025-12-01"
+compatibility_date = "2026-05-27"
 
 # D1 データベース
 [[d1_databases]]
 binding = "DB"
 database_name = "my-blog-db"
 database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+migrations_dir = "drizzle"
 
 # R2 バケット
 [[r2_buckets]]
