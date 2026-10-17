@@ -5,7 +5,7 @@ import { parse as parseYaml } from 'yaml'
 import wranglerToml from '../wrangler.toml?raw'
 import compatDateToml from '../steps/compat-date.toml?raw'
 import workflowYml from '../.github/workflows/deploy.yml?raw'
-import devVarsExample from '../.dev.vars.example?raw'
+import typesTs from '../src/types.ts?raw'
 
 type Config = Record<string, any>
 
@@ -89,8 +89,8 @@ describe('.github/workflows/deploy.yml', () => {
   })
 })
 
-describe('.dev.vars.example', () => {
-  it('JWT_SECRET をローカル用の値で持つ', () => {
-    expect(devVarsExample).toContain('JWT_SECRET=local-dev-secret-key')
+describe('src/types.ts', () => {
+  it('第 8 章のアプリは秘密の値を Bindings に持たない（10.5）', () => {
+    expect(typesTs).not.toMatch(/SECRET/)
   })
 })

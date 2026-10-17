@@ -1,2 +1,0 @@
-# .dev.vars (dotenv 形式、.gitignore に追加)
-JWT_SECRET=local-dev-secret-key

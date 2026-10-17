@@ -7,6 +7,6 @@ type Bindings = {
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
-// #endregion
 
 export default app
+// #endregion

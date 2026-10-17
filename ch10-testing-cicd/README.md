@@ -18,7 +18,6 @@ ch10-testing-cicd/
   .github/workflows/deploy.yml  # GitHub Actions のデプロイ
   wrangler.toml                 # 環境別の Wrangler 設定
   src/, migrations/             # 第8章の写し(scripts/sync-from-ch08.sh)
-  .dev.vars.example             # ローカル開発のシークレットの例
 ```
 
 ## セットアップとコマンド
